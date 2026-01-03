@@ -116,10 +116,12 @@
             max-width: 800px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 5px;
             border-bottom: 4px double var(--dominant-color);
             padding-bottom: 5px;
             flex-shrink: 0;
+            position: relative;
         }
         
         .title {
@@ -140,6 +142,24 @@
 
         .stat {
             font-weight: bold;
+        }
+
+        /* FULL SCREEN BUTTON */
+        #btn-fullscreen {
+            background: transparent;
+            border: 1px solid var(--dominant-color);
+            color: var(--dominant-color);
+            font-family: var(--font-pixel);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 5px;
+            margin-left: 10px;
+            height: 24px;
+            line-height: 22px;
+        }
+        #btn-fullscreen:hover {
+            background: var(--dominant-color);
+            color: var(--bg-color);
         }
 
         /* --- LAYOUT WRAPPER --- */
@@ -313,13 +333,18 @@
         /* --- SCOOTER OVERLAY --- */
         .scooter-sprite {
             position: absolute;
-            color: var(--secondary-color);
+            color: #000; /* Black Text */
+            background-color: var(--dominant-color); /* Solid Block Background */
             font-weight: 900;
             z-index: 20;
             pointer-events: none;
             white-space: pre;
             font-family: var(--font-pixel);
             line-height: 1;
+            
+            /* --- SCOOTER HIGHLIGHT (Requested Block Style) --- */
+            opacity: 0.85;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
         }
 
         /* --- HAZARD OVERLAYS --- */
@@ -547,6 +572,7 @@
             margin-right: -10px;
         }
         
+        /* RESTORED HEIGHTS */
         #street-scene {
             height: 240px; 
             border-bottom: 2px solid var(--dominant-color);
@@ -865,6 +891,7 @@
             <div class="stat-box">
                 <div class="stat" id="level-display">L:1</div>
                 <div class="stat" id="grit-display" style="color:var(--safe-green)">GRIT:40</div>
+                <button id="btn-fullscreen">[⛶]</button>
             </div>
         </header>
 
@@ -939,6 +966,14 @@
         const MOVES_PER_HUNGER = 3; 
         const TILE_SIZE = 22; 
         
+        // --- AUDIO CONFIG ---
+        // PASTE YOUR AUDIO LINKS HERE IN THE QUOTES
+        const AUDIO_SOURCES = {
+            1: "", // Stage 1 Music URL
+            2: "", // Stage 2 Music URL
+            3: ""  // Stage 3 Music URL
+        };
+        
         const TILES = {
             PLAYER: '&',
             FOOD: '$', 
@@ -962,29 +997,29 @@
 _____________||_________________________________________________________________________________________________________________________________________________________
 ________________________________________________________________________________________________________________________________________________________________________
    .---.                     .---.                                                                                                                                      |
-  (  <span class="sign">$</span>  )  [<span class="sign">FRESH CATCH</span>]    (  <span class="sign">$</span>  )                                                                                                                                    (SERVICE ENTRANCE) |
+  ( <span class="sign">$</span> )  [<span class="sign">FRESH CATCH</span>]    ( <span class="sign">$</span> )                                                                                                                            (SERVICE ENTRANCE) |
    '---'  +-------------+    '---'                                                                                                                                 _____|_____
-    ||    |  /·.¸      |     ||        [<span class="neon">FISH $15</span>]             [<span class="neon">CRAB $28</span>]            [<span class="neon">PORK $12</span>]                                                                   | <span class="staff-only">STAFF ONLY</span>|
-    ||    | /¸...¸:·   |     ||       +--------------+         +--------------+       <span class="wall">.---.   .---.   .---.</span>                                                        | ___________ |
-    ||    |            |     ||       | ~  <span class="fish"></span> ~|          |  <span class="crab-left">(V)</span>     <span class="crab-right">(V)</span>  |       <span class="meat">(   ( ) (   ( ) (   ( )</span>                                                        | <span class="curtain">| | | | | |</span> |
-   _||_   | <span class="ice"><span class="flopper">><></span> <span class="flopper">><></span> <span class="flopper">><></span></span> |    _||_     | ~  <span class="fish"></span> ~|          |  <span class="crab-left">(@@)</span>    <span class="crab-right">(@@)</span> |       <span class="meat"> \ <span class="drop">,</span> )   \\ <span class="drop">.</span> )   \\ <span class="drop">'</span> )</span>                                                        | <span class="curtain">| | | | | |</span> |
+    ||    |  /·.¸       |     ||        [<span class="neon">FISH $15</span>]             [<span class="neon">CRAB $28</span>]            [<span class="neon">PORK $12</span>]                                                                | <span class="staff-only">STAFF ONLY</span>|
+    ||    | /¸...¸:·    |     ||        +--------------+        +--------------+       <span class="wall">.---.   .---.   .---.</span>                                                        | ___________ |
+    ||    |             |     ||        | ~  <span class="fish"></span> ~|          |  <span class="crab-left">(V)</span>      <span class="crab-right">(V)</span>  |       <span class="meat">(   ( ) (   ( ) (   ( )</span>                                                        | <span class="curtain">| | | | | |</span> |
+   _||_   | <span class="ice"><span class="flopper">><></span> <span class="flopper">><></span> <span class="flopper">><></span></span> |    _||_      | ~  <span class="fish"></span> ~|          |  <span class="crab-left">(@@)</span>     <span class="crab-right">(@@)</span> |       <span class="meat"> \ <span class="drop">,</span> )   \\ <span class="drop">.</span> )   \\ <span class="drop">'</span> )</span>                                                        | <span class="curtain">| | | | | |</span> |
   /____\\  +-------------+    /____\\    +--------------+         +--------------+       <span class="meat"> ) (      ) (      ) (</span>                                                        | <span class="curtain">| | | | | |</span> |
                                                                                       <span class="wall">| |      | |      | |</span>                                                        | <span class="curtain">: : : : : :</span> |
   <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\`-´░░░░░\`-´░░░░░\`-´░░░░░░░</span>                                                        | <span class="curtain">. . . . . .</span> |
-  <span class="mud">░░</span> <span class="sewer"> .===. </span>  <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span>                                                        |             |
+  <span class="mud">░░</span> <span class="sewer"> .===. </span>  <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span>                                                        |              |
   <span class="mud">░░</span> <span class="sewer"> ||||| </span><span class="steam">~</span>   <span class="mud">░░</span>                                   <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span> <span class="blood"></span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░</span>                                                        |  <span class="crate">[CRATES]</span>   |
   <span class="mud">░░</span> <span class="sewer"> '===' </span>    <span class="mud">░░</span>                                   <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span> <span class="meat">~~~~~~~</span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░</span>                                                        |  <span class="crate">[||||||]</span>   |
   <span class="mud">░░</span> <span class="sewer"> '===' </span>    <span class="mud">░░</span>                                   <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span> <span class="meat">~~~~~~~</span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░</span>                                                        |  <span class="crate">[||||||]</span>   |
-  <span class="mud">░░░░░░░░░░░░░░</span>                     <span class="mud">░░░░░░</span> <span class="ice">~SLIPPERY~</span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span>                                                        |__<span class="crate">[||||||]</span>___|`,
+  <span class="mud">░░░░░░░░░░░░░░</span>                      <span class="mud">░░░░░░</span> <span class="ice">~SLIPPERY~</span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span>                                                        |__<span class="crate">[||||||]</span>___|`,
                 
-                bottom: `         (VEGETABLES)                  (DURIANS)            (BANANAS)                (SPICES & DRY GOODS)            (LOCAL GREENS)            (CITRUS MOUNTAIN)                    \\
-   <span class="veg">vvv    vvv    vvv</span>                <span class="durian"> ^,^    ^,^</span>          <span class="banana"> //    \\\\</span>                <span class="spice">^^^       ^^^</span>                  <span class="veg">{{{{{{{}}}}</span>               <span class="fruit"> o  o  o </span>                      \\
-  <span class="veg">       </span>   <span class="veg">      (   ) (   )   (   )</span>               <span class="durian">(* *) (* *)</span>        <span class="banana">((      ))</span>               <span class="spice">^^^^^     ^^^^^</span>                  <span class="veg">{{{{{{}}}</span>                <span class="fruit">o o  o o </span>                        \\  (TO KITCHEN)
-   <span class="veg">    \\ /    \\ /    \\ /</span>                <span class="durian"> \`~\'    \`~\'</span>        <span class="banana">((((    ))))</span>             <span class="spice">^^^^^^^   ^^^^^^^</span>                  <span class="veg">{{{{{{{}}</span>               <span class="fruit">o  o  o  o</span>                         >
-   <span class="veg">    _Y_    _Y_    _Y_</span>               [<span class="neon">$18/KG </span>]          [<span class="neon">$3/BUN </span>]               <span class="spice">[=======][=======]</span>                 <span class="wall">[=======]</span>               <span class="wall">[==========]</span>                        /
-           +---------------+              (DRAGONFRUIT)        (WATERMELONS)           | <span class="neon">$5/100g</span>|| <span class="neon">$12/kg</span> |                 |<span class="neon">$4/BDL </span>|               | <span class="neon">$6/BAG   </span> |                        /
-  | <span class="neon">$2 / KILO !!!</span> |                <span class="dragon"> ,^,    ,^,</span>         <span class="melon"> /'''\\ </span>             +-------++-------+                 +-------+               +----------+                      /
-  +---------------+               <span class="dragon"><, ,> <, ,></span>         <span class="melon">(::<span class="melon-in">:::</span>:)</span>                                                                                                        /
+                bottom: `         (VEGETABLES)                 (DURIANS)            (BANANAS)                (SPICES & DRY GOODS)            (LOCAL GREENS)            (CITRUS MOUNTAIN)                    \\
+   <span class="veg">vvv    vvv    vvv</span>                 <span class="durian"> ^,^    ^,^</span>          <span class="banana"> //    \\\\</span>                <span class="spice">^^^       ^^^</span>                  <span class="veg">{{{{{{{}}}}</span>               <span class="fruit"> o  o  o </span>                    \\
+  <span class="veg">       </span>   <span class="veg">      (   ) (   )   (   )</span>                <span class="durian">(* *) (* *)</span>        <span class="banana">((      ))</span>                <span class="spice">^^^^^     ^^^^^</span>                  <span class="veg">{{{{{{}}}</span>                <span class="fruit">o o  o o </span>                        \\  (TO KITCHEN)
+   <span class="veg">    \\ /    \\ /    \\ /</span>                <span class="durian"> \`~\'    \`~\'</span>        <span class="banana">((((    ))))</span>             <span class="spice">^^^^^^^   ^^^^^^^</span>                  <span class="veg">{{{{{{{}}</span>               <span class="fruit">o  o  o  o</span>                          >
+   <span class="veg">    _Y_    _Y_    _Y_</span>                [<span class="neon">$18/KG </span>]          [<span class="neon">$3/BUN </span>]               <span class="spice">[=======][=======]</span>                 <span class="wall">[=======]</span>               <span class="wall">[==========]</span>                         /
+           +---------------+             (DRAGONFRUIT)        (WATERMELONS)           | <span class="neon">$5/100g</span>|| <span class="neon">$12/kg</span> |                 |<span class="neon">$4/BDL </span>|               | <span class="neon">$6/BAG   </span> |                         /
+  | <span class="neon">$2 / KILO !!!</span> |                <span class="dragon"> ,^,    ,^,</span>         <span class="melon"> /'''\\ </span>             +-------++-------+                 +-------+               +----------+                       /
+  +---------------+               <span class="dragon"><, ,> <, ,></span>         <span class="melon">(::<span class="melon-in">:::</span>:)</span>                                                                                                       /
                                    <span class="dragon"> \`~\'    \`~\'</span>         <span class="melon"> \\___/ </span>                                                                                                        /
                                   [<span class="neon">$2/EA  </span>]          [<span class="neon">$5/EA  </span>]                                                                                                        /
 ____________________________________________________________________________________________________________________________________________________________________/`
@@ -993,23 +1028,23 @@ ________________________________________________________________________________
                 top: `                          <span class="drain-pipe">||</span>                                                             
                           <span class="drain-pipe">||</span>                                                             
 +-------------------------<span class="drain-pipe">||</span>-----------------------------------------------------------------------+
-|    <span class="ice-static">(WALK-IN FRIDGE)</span>     <span class="drain-pipe">||</span>                        <span class="spice">(DRY STORAGE WAREHOUSE)</span>                        |
+|    <span class="ice-static">(WALK-IN FRIDGE)</span>     <span class="drain-pipe">||</span>                         <span class="spice">(DRY STORAGE WAREHOUSE)</span>                         |
 |    <span class="ice-static">+----------------+</span>   <span class="drain-pipe">||</span>   <span class="wall">+---------------------------------------------------------------+</span>   |
-|    <span class="ice-static">|  <span class="meat">?</span>    <span class="meat">?</span>    <span class="meat">?</span>   |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                                         <span class="spice">mmm</span>                          <span class="wall">|</span>   |
-|    <span class="ice-static">|  <span class="wall">    |</span>    <span class="wall">|</span>    <span class="wall">|</span>   |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                        <span class="spice">)_(</span>         <span class="spice">)-(</span>                          <span class="wall">|</span>   |
-|    <span class="ice-static">| <span class="meat">   (S) (S) (S)</span>    |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                        <span class="spice">.'-'.</span>       <span class="spice">(   )</span>                          <span class="wall">|</span>   |
+|    <span class="ice-static">|  <span class="meat">?</span>    <span class="meat">?</span>    <span class="meat">?</span>   |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                                    <span class="spice">mmm</span>                           <span class="wall">|</span>   |
+|    <span class="ice-static">|  <span class="wall">     |</span>    <span class="wall">|</span>    <span class="wall">|</span>   |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                         <span class="spice">)_(</span>        <span class="spice">)-(</span>                           <span class="wall">|</span>   |
+|    <span class="ice-static">| <span class="meat">   (S) (S) (S)</span>    |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                         <span class="spice">.'-'.</span>       <span class="spice">(   )</span>                           <span class="wall">|</span>   |
 |    <span class="ice-static">| <span class="meat">        (S) (S) (S)</span>    |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>   <span class="spice">/-\\</span>        <span class="spice">/-\\</span>        <span class="spice">|:::|</span>       <span class="spice">|   |</span>        <span class="spice">{:}</span>        <span class="spice">{:}</span>       <span class="wall">|</span>   |
 |    <span class="ice-static">|  <span class="meat">        U</span>    <span class="meat">U</span>    <span class="meat">U</span>   |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>  <span class="spice">( R )</span>      <span class="spice">( F )</span>       <span class="spice">|:::|</span>       <span class="spice"> |   |</span>        <span class="spice">{S}</span>        <span class="spice">{M}</span>       <span class="wall">|</span>   |
 |    <span class="ice-static">| <span class="white">          [|^^|]</span>  <span class="meat">[(@)]</span>  |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>   <span class="spice">\\_/</span>          <span class="spice">\\_/</span>        <span class="spice">'-.-'</span>       <span class="spice">\|___|</span>        <span class="spice">{_}</span>        <span class="spice">{_}</span>       <span class="wall">|</span>   |
-|    <span class="ice-static">| <span class="wall">   [====]</span>  <span class="wall">[===]</span>  |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>  <span class="spice">[====]</span>      <span class="spice">[=====]</span>      <span class="spice">[===]</span>      <span class="spice">[===]</span>      <span class="spice">[=====]</span>      <span class="spice">[===]</span>    <span class="wall">|</span>
+|    <span class="ice-static">| <span class="wall">   [====]</span>  <span class="wall">[===]</span>  |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>  <span class="spice">[====]</span>       <span class="spice">[=====]</span>       <span class="spice">[===]</span>       <span class="spice">[===]</span>       <span class="spice">[=====]</span>       <span class="spice">[===]</span>    <span class="wall">|</span>
 |    <span class="ice-static">|                |</span>   <span class="drain-pipe">||</span>   <span class="wall">|===============================================================|</span>   |
-|    <span class="ice-static">|       _    ____ |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                          <span class="meat">mmm</span>         <span class="meat">mmm</span>           <span class="meat">mmm</span>            <span class="wall">|</span>   |
-|    <span class="ice-static">|      (_) (____) |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>    <span class="wall">__</span>           <span class="wall">__</span>          <span class="meat">)-(</span>         <span class="meat">)-(</span>           <span class="meat">)-(</span>              <span class="wall">|</span>   |
-|    <span class="ice-static">|      (_)  |@@|  |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>   <span class="wall">(  )</span>         <span class="wall">(  )</span>        <span class="meat">(   )</span>       <span class="meat">(   )</span>         <span class="meat">(   )</span>             <span class="wall">|</span>   |
-|    <span class="ice-static">|      (_)  \\__/ |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>   <span class="wall">(__)</span>         <span class="wall">(__)</span>        <span class="meat">|   |</span>       <span class="meat">|   |</span>         <span class="meat">|   |</span>             <span class="wall">|</span>   |
-|    <span class="ice-static">|       _    U    |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>   <span class="wall">(  )</span>         <span class="wall">(  )</span>        <span class="meat">|   |</span>       <span class="meat">|   |</span>         <span class="meat">|   |</span>             <span class="wall">|</span>   |
-|    <span class="ice-static">| <span class="meat">[~@@~]</span>  <span class="fish">[<>< ]</span> |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>   <span class="wall">(__)</span>         <span class="wall">(__)</span>        <span class="meat">|___|</span>       <span class="meat">|___|</span>         <span class="meat">|___|</span>             <span class="wall">|</span>   |
-|    <span class="ice-static">| <span class="wall">[====]</span>  <span class="wall">[====]</span> |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>   <span class="wall">(____)</span>       <span class="wall">(____)</span>       <span class="danger">[|X|]</span>       <span class="danger">[|/|]</span>       <span class="danger">(oooo)</span>        <span class="wall">|</span>   |
+|    <span class="ice-static">|       _    ____ |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>                           <span class="meat">mmm</span>         <span class="meat">mmm</span>            <span class="meat">mmm</span>             <span class="wall">|</span>   |
+|    <span class="ice-static">|      (_) (____) |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>     <span class="wall">__</span>            <span class="wall">__</span>          <span class="meat">)-(</span>         <span class="meat">)-(</span>            <span class="meat">)-(</span>               <span class="wall">|</span>   |
+|    <span class="ice-static">|      (_)  |@@|  |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>    <span class="wall">(  )</span>          <span class="wall">(  )</span>        <span class="meat">(   )</span>       <span class="meat">(   )</span>          <span class="meat">(   )</span>               <span class="wall">|</span>   |
+|    <span class="ice-static">|      (_)  \\__/ |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>    <span class="wall">(__)</span>          <span class="wall">(__)</span>        <span class="meat">|   |</span>       <span class="meat">|   |</span>          <span class="meat">|   |</span>               <span class="wall">|</span>   |
+|    <span class="ice-static">|       _    U    |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>    <span class="wall">(  )</span>          <span class="wall">(  )</span>        <span class="meat">|   |</span>       <span class="meat">|   |</span>          <span class="meat">|   |</span>               <span class="wall">|</span>   |
+|    <span class="ice-static">| <span class="meat">[~@@~]</span>  <span class="fish">[<>< ]</span> |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>    <span class="wall">(__)</span>          <span class="wall">(__)</span>        <span class="meat">|___|</span>       <span class="meat">|___|</span>          <span class="meat">|___|</span>               <span class="wall">|</span>   |
+|    <span class="ice-static">| <span class="wall">[====]</span>  <span class="wall">[====]</span> |</span>   <span class="drain-pipe">||</span>   <span class="wall">|</span>    <span class="wall">(____)</span>        <span class="wall">(____)</span>        <span class="danger">[|X|]</span>       <span class="danger">[|/|]</span>        <span class="danger">(oooo)</span>        <span class="wall">|</span>   |
 |    +-------(0)------+   <span class="drain-pipe">||</span>   +---------------------------------------------------------------+   |
 |    +-----+-----+-----+  <span class="drain-pipe">||</span>   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+       |
 |    |     |     |     |  <span class="drain-pipe">||</span>   |     |     |     |     |     |     |     |     |     |     |       |
@@ -1017,34 +1052,34 @@ ________________________________________________________________________________
 |   +---------------------++-------------------------------------------------------------------+   |
 |   |   <span class="neon">THE HOT LINE (COOKING STATION)</span>                                                         |   |
 |   |                                                                                          |   |
-|   |    (WOK STATION 1)           (WOK STATION 2)            (STOVE TOP)             (OVENS)      |   |
-|   |          <span class="smoke-anim">}</span>                         <span class="smoke-anim">}</span>                         <span class="smoke-anim">}</span>                                   |   |
-|   |        (  )                      (  )                    (  ) (  )              [~~~~~]      |   |
-|   |         )(                        )(                      )(    )(               [~~~~~]      |   |
-|   |        (__)                      (__)                    (__) (__)              [__o__]      |   |
+|   |    (WOK STATION 1)           (WOK STATION 2)             (STOVE TOP)             (OVENS)       |   |
+|   |          <span class="smoke-anim">}</span>                          <span class="smoke-anim">}</span>                          <span class="smoke-anim">}</span>                                   |   |
+|   |        (  )                      (  )                    (  ) (  )              [~~~~~]       |   |
+|   |         )(                        )(                      )(    )(                [~~~~~]       |   |
+|   |        (__)                      (__)                    (__) (__)               [__o__]       |   |
 |   |       /    \\                    /    \\                  /    \\ /    \\             |    |       |   |
 |   |      |______|                  |______|                |_____|_____|             |_____|       |   |
-|   |      <span class="fire"></span>                  <span class="fire"></span>                <span class="gas"></span>             <span class="heat"></span>       |   |
+|   |      <span class="fire"></span>                  <span class="fire"></span>                 <span class="gas"></span>             <span class="heat"></span>       |   |
 |   |                                                                                          |   |
 |   +------------------------------------------------------------------------------------------+   |
 `, 
                 bottom: `|   +-----------------------------------------------------+   +--------------------------------+   |
-|   |    (WOK STATION 1)           (WOK STATION 2)            (STOVE TOP)             (OVENS)      |   |
-|   |          <span class="smoke-anim">}</span>                         <span class="smoke-anim">}</span>                         <span class="smoke-anim">}</span>                                   |   |
-|   |        (  )                      (  )                    (  ) (  )              [~~~~~]      |   |
-|   |         )(                        )(                      )(    )(               [~~~~~]      |   |
-|   |        (__)                      (__)                    (__) (__)              [__o__]      |   |
+|   |    (WOK STATION 1)           (WOK STATION 2)             (STOVE TOP)             (OVENS)       |   |
+|   |          <span class="smoke-anim">}</span>                          <span class="smoke-anim">}</span>                          <span class="smoke-anim">}</span>                                   |   |
+|   |        (  )                      (  )                    (  ) (  )              [~~~~~]       |   |
+|   |         )(                        )(                      )(    )(                [~~~~~]       |   |
+|   |        (__)                      (__)                    (__) (__)               [__o__]       |   |
 |   |       /    \\                    /    \\                  /    \\ /    \\             |    |       |   |
 |   |      |______|                  |______|                |_____|_____|             |_____|       |   |
-|   |      <span class="fire"></span>                  <span class="fire"></span>                <span class="gas"></span>             <span class="heat"></span>       |   |
+|   |      <span class="fire"></span>                  <span class="fire"></span>                 <span class="gas"></span>             <span class="heat"></span>       |   |
 |   |                                                                                          |   |
 |   +------------------------------------------------------------------------------------------+   |
-|                                                                     |                            |
-|    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+-----+-----+-----+-----+    |
+|                                                                     |                             |
+|    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+-----+-----+-----+-----+     |
 |    |     |     |     |     |     |     |     |     |     |     |    |     |     |     |     |    |
 |    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+-----+-----+-----+-----+    v
 |    |     |     |     |     |     |     |     |     |     |     |    |     |     |     |     |   (TO THE PIPE)
-+---------------------------------------------------------------------<span class="drain-pipe">|</span>                             |`,
++---------------------------------------------------------------------<span class="drain-pipe">|</span>                            |`,
                 left: `|<span class="sign"> PANTRY </span>|
 |<span class="wall">========</span>|
 |<span class="spice">(JARS)</span>  |
@@ -1197,11 +1232,11 @@ ________________________________________________________________________________
             shrimp: [
                 ".            ,",
                 "            .:/",
-                ".       ,,///;,   ,;/",
-                "   .    o:::::::;;///",
-                "      >::::::::;;\\\\\\",
+                ".        ,,///;,   ,;/",
+                "    .    o:::::::;;///",
+                "       >::::::::;;\\\\\\",
                 "        ''\\\\\\\\\\'\" ';\\",
-                "           ';\\"
+                "            ';\\"
             ],
             fish: [
                 "  ;,//;,    ,;/",
@@ -1251,10 +1286,10 @@ ________________________________________________________________________________
         
         // Custom Bed Art (User Provided)
         const BED_ART = [
-            "     _   ()                   ",
+            "     _    ()                  ",
             "() .'_`'.||                   ",
             "||/.| ||\\ |                   ",
-            "| /|| || ||         _   ()    ",
+            "| /|| || ||         _    ()   ",
             "|| || || ||    () .'_`'.||    ",
             "|| || || ||    ||/.| ||\\ |    ",
             "|| || |I-'`-._ | /|| || ||    ",
@@ -1262,17 +1297,15 @@ ________________________________________________________________________________
             "m._ <'_  ||   `|| || || ||    ",
             "i| `-._`-'|    || || |I-'|    ",
             "c)     `-._`-._||_I'`_.-||    ",
-            "           `-._` _.-'   ()    ",
-            "               ||       `     "
+            "           `-._` _.-'    ()   ",
+            "                ||        `      "
         ];
         
-        // Custom Mouse Art (User Provided)
+        // Custom Mouse Art (User Provided) - Padded to ensure equal width (10 chars) for rendering
         const MOUSE_ART = [
-            "     ) _     _        ",
-            "    ( (^)-~-(^)       ",
-            "__,-.\\_( 6 6 )__,-.___",
-            "  'M'   \\   /   'M'   ",
-            "         >o<          "
+            "(o)(o)--. ",
+            " \\../ ( ) ",
+            " m\\/m--m'-"
         ];
         
         // ASCII ART for Modals
@@ -1280,29 +1313,29 @@ ________________________________________________________________________________
             "      o0o      ",
             "    o0o0o0o    ",
             "     0o0o0     ",
-            "      ooo      "
+            "       ooo      "
         ].join('\n');
         
         const LOVERS_ART_ASCII = [
-            "   _  _         _  _  ",
-            "  ( \\/ )       ( \\/ ) ",
-            "   \\  /         \\  /  ",
-            "   /  \\         /  \\  ",
-            "  (    )       (    ) ",
-            "   \\  /         \\  /  ",
-            "    \\/           \\/   "
+            "   _  _          _  _  ",
+            "  ( \\/ )        ( \\/ ) ",
+            "   \\  /          \\  /  ",
+            "    /  \\          /  \\  ",
+            "  (    )        (    ) ",
+            "   \\  /          \\  /  ",
+            "    \\/            \\/    "
         ].join('\n');
         
         const SKULL_ART_ASCII = [
             "     _.--\"\"--._     ",
-            "    /  _    _  \\    ",
-            " _  ( (_\\  /_) )  _ ",
+            "     /  _     _  \\    ",
+            " _   ( (_\\   /_) )   _ ",
             "{ \\._\\   /\\   /_./ }",
             "/_\"=-.}______{.-=\"_\\",
             " _  _.=(\"\"\"\")=._  _ ",
             "( \\/  /\\_.._/\\  \\/ )",
             " \\__ /  .  .  \\ __/ ",
-            "    )___/  \\___(    "
+            "     )___/  \\___(     "
         ].join('\n');
         
         // Walkable floor decorations for Stage 3
@@ -1312,11 +1345,11 @@ ________________________________________________________________________________
             1: {
                 name: "WET MARKET",
                 width: 84, 
-                height: 16, 
+                height: 18, 
                 floorChars: ['~', ',', '.', '"'],
                 wallChar: '#',
-                enemyChar: 'M',
-                enemyName: "WALKING HUMAN",
+                enemyChar: 'B',
+                enemyName: "GIANT BEETLE",
                 desc: "Giants are shopping. Watch for SCOOTERS and CATS!",
                 pattern: "puddles",
                 layout: "horizontal",
@@ -1377,8 +1410,6 @@ ________________________________________________________________________________
                 this.gritEl = document.getElementById('grit-display');
                 this.levelEl = document.getElementById('level-display');
                 this.layoutWrapper = document.getElementById('layout-wrapper');
-                // this.gameOverModal removed, using unified modal
-                this.deathReasonEl = document.getElementById('death-reason');
                 
                 // Modal elements
                 this.modalOverlay = document.getElementById('modal-overlay');
@@ -1386,6 +1417,11 @@ ________________________________________________________________________________
                 this.modalArt = document.getElementById('modal-art');
                 this.modalText = document.getElementById('modal-text');
                 this.modalBtn = document.getElementById('modal-btn');
+
+                // Audio Context
+                this.audio = new Audio();
+                this.audio.loop = true;
+                this.currentSong = null;
 
                 this.level = 1;
                 this.grit = MAX_GRIT;
@@ -1468,6 +1504,21 @@ ________________________________________________________________________________
                 const themeIndex = ((this.level - 1) % 3) + 1;
                 document.body.classList.add(`theme-${themeIndex}`);
             }
+            
+            playMusic() {
+                const themeIndex = ((this.level - 1) % 3) + 1;
+                const songUrl = AUDIO_SOURCES[themeIndex];
+                
+                if (this.currentSong !== songUrl) {
+                    this.currentSong = songUrl;
+                    if (songUrl) {
+                        this.audio.src = songUrl;
+                        this.audio.play().catch(e => console.log("Audio waiting for user interaction"));
+                    } else {
+                        this.audio.pause();
+                    }
+                }
+            }
 
             log(msg, type = 'normal') {
                 const div = document.createElement('div');
@@ -1494,6 +1545,9 @@ ________________________________________________________________________________
 
                 // UPDATE THEME HERE
                 this.updateTheme();
+                
+                // PLAY MUSIC
+                this.playMusic();
 
                 const biomeIndex = ((this.level - 1) % 3) + 1;
                 this.biome = BIOMES[biomeIndex];
@@ -1531,6 +1585,7 @@ ________________________________________________________________________________
             skipLevel() {
                 this.log("CHEAT: WARPING TO NEXT FLOOR...", 'new');
                 this.level++;
+                if(this.level > 3) this.level = 1;
                 this.startLevel();
             }
 
@@ -1702,56 +1757,56 @@ ________________________________________________________________________________
                 const themeIndex = ((this.level - 1) % 3) + 1;
                 
                 if (themeIndex === 3) {
-                     // 1. Add Floor Decorations (Walkable "Mess")
-                     // Socks, toys, papers scattered around
-                     const messCount = 40;
-                     for(let i=0; i<messCount; i++) {
-                         const rx = Math.floor(Math.random() * (this.mapW - 2)) + 1;
-                         const ry = Math.floor(Math.random() * (this.mapH - 2)) + 1;
-                         
-                         // Only place if empty
-                         if (this.map[ry][rx] === 'EMPTY') {
-                             // Pick random decoration char
-                             const deco = FLOOR_DECO_CHARS[Math.floor(Math.random() * FLOOR_DECO_CHARS.length)];
-                             this.visualMap[ry][rx] = deco;
-                             // We DO NOT change this.map[ry][rx] to WALL, so it remains walkable
-                         }
-                     }
+                      // 1. Add Floor Decorations (Walkable "Mess")
+                      // Socks, toys, papers scattered around
+                      const messCount = 40;
+                      for(let i=0; i<messCount; i++) {
+                          const rx = Math.floor(Math.random() * (this.mapW - 2)) + 1;
+                          const ry = Math.floor(Math.random() * (this.mapH - 2)) + 1;
+                          
+                          // Only place if empty
+                          if (this.map[ry][rx] === 'EMPTY') {
+                              // Pick random decoration char
+                              const deco = FLOOR_DECO_CHARS[Math.floor(Math.random() * FLOOR_DECO_CHARS.length)];
+                              this.visualMap[ry][rx] = deco;
+                              // We DO NOT change this.map[ry][rx] to WALL, so it remains walkable
+                          }
+                      }
 
-                     this.drawRectWall(2, this.mapH - 5, this.mapW - 4, 4, true, 'BED');
-                     this.enemies.push({ x: Math.floor(this.mapW/2), y: 5, type: 'MOUSE', dir: 1 });
-                     this.playerPos = { x: Math.floor(this.mapW/2), y: 2 };
-                     this.map[this.playerPos.y][this.playerPos.x] = 'EMPTY';
-                     
-                     // Add custom bed visual logic
-                     const bedHeight = BED_ART.length;
-                     const bedWidth = BED_ART[0].length;
-                     
-                     const bedY = this.mapH - bedHeight - 1; 
-                     const bedX = Math.floor((this.mapW - bedWidth) / 2); 
-                     
-                     for(let r = 0; r < bedHeight; r++) {
-                         const rowStr = BED_ART[r];
-                         for(let c = 0; c < rowStr.length; c++) {
-                             const char = rowStr[c];
-                             const tx = bedX + c;
-                             const ty = bedY + r;
-                             
-                             if (tx >= 0 && tx < this.mapW && ty >= 0 && ty < this.mapH) {
-                                 if (char !== ' ') {
-                                     this.map[ty][tx] = 'BED';
-                                     this.visualMap[ty][tx] = char;
-                                 }
-                             }
-                         }
-                     }
-                     
-                     // Spawn Mouse at Top
-                     this.enemies.push({ x: Math.floor(this.mapW/2), y: 5, type: 'MOUSE', dir: 1 });
-                     
-                     // Set Player Start at Top (Run away!)
-                     this.playerPos = { x: Math.floor(this.mapW/2), y: 2 };
-                     this.map[this.playerPos.y][this.playerPos.x] = 'EMPTY';
+                      this.drawRectWall(2, this.mapH - 5, this.mapW - 4, 4, true, 'BED');
+                      this.enemies.push({ x: Math.floor(this.mapW/2), y: 5, type: 'MOUSE', dir: 1 });
+                      this.playerPos = { x: Math.floor(this.mapW/2), y: 2 };
+                      this.map[this.playerPos.y][this.playerPos.x] = 'EMPTY';
+                      
+                      // Add custom bed visual logic
+                      const bedHeight = BED_ART.length;
+                      const bedWidth = BED_ART[0].length;
+                      
+                      const bedY = this.mapH - bedHeight - 1; 
+                      const bedX = Math.floor((this.mapW - bedWidth) / 2); 
+                      
+                      for(let r = 0; r < bedHeight; r++) {
+                          const rowStr = BED_ART[r];
+                          for(let c = 0; c < rowStr.length; c++) {
+                              const char = rowStr[c];
+                              const tx = bedX + c;
+                              const ty = bedY + r;
+                              
+                              if (tx >= 0 && tx < this.mapW && ty >= 0 && ty < this.mapH) {
+                                  if (char !== ' ') {
+                                       this.map[ty][tx] = 'BED';
+                                       this.visualMap[ty][tx] = char;
+                                  }
+                              }
+                          }
+                      }
+                      
+                      // Spawn Mouse at Top
+                      this.enemies.push({ x: Math.floor(this.mapW/2), y: 5, type: 'MOUSE', dir: 1 });
+                      
+                      // Set Player Start at Top (Run away!)
+                      this.playerPos = { x: Math.floor(this.mapW/2), y: 2 };
+                      this.map[this.playerPos.y][this.playerPos.x] = 'EMPTY';
 
                 } else {
                     // Standard Generation for 1 & 2
@@ -1762,10 +1817,10 @@ ________________________________________________________________________________
                             for (let x = 2; x < this.mapW - 4; x += 4) { // Tighter grid (was 5)
                                 if (Math.random() < 0.90) { // Very High Density
                                     if (themeIndex === 2) {
-                                         // More hiding spots!
-                                         this.drawRectWall(x, y, 3, 3, false, 'HIDING_SPOT');
+                                           // More hiding spots!
+                                           this.drawRectWall(x, y, 3, 3, false, 'HIDING_SPOT');
                                     } else {
-                                         this.drawRectWall(x, y, 3, 3, true); 
+                                           this.drawRectWall(x, y, 3, 3, true); 
                                     }
                                 }
                             }
@@ -1811,7 +1866,7 @@ ________________________________________________________________________________
                 let enemyCount = 3 + Math.floor(this.level / 2) + Math.floor(area * 0.005);
                 
                 // More Humans in Stage 1
-                if (themeIndex === 1) enemyCount = Math.floor(enemyCount * 1.6);
+                if (themeIndex === 1) enemyCount = Math.floor(enemyCount * 2.0);
 
                 // MORE Ants in Stage 2 to see them get crushed!
                 if (themeIndex === 2) enemyCount = Math.floor(enemyCount * 2.2);
@@ -1951,7 +2006,9 @@ ________________________________________________________________________________
                     
                     // WIN CONDITION FOR STAGE 3
                     if (targetType === 'BED') {
-                         this.showEndScreen();
+                         // Reset directly to Level 1
+                         this.level = 1;
+                         this.showStartScreen(); // Triggers "REBORN"
                          return;
                     }
 
@@ -1975,6 +2032,7 @@ ________________________________________________________________________________
                         this.log(FLAVOR_TEXT.poison, 'danger');
                     } else if (targetType === 'EXIT') {
                         this.level++;
+                        if (this.level > 3) this.level = 1;
                         this.log(FLAVOR_TEXT.level_up, 'new');
                         this.startLevel();
                         return;
@@ -2198,7 +2256,7 @@ ________________________________________________________________________________
                 if (this.level !== 1) return;
                 if (this.scooterTimer <= 0) {
                     this.spawnScooter();
-                    this.scooterTimer = Math.floor(Math.random() * 8) + 6;
+                    this.scooterTimer = Math.floor(Math.random() * 6) + 3;
                 } else {
                     this.scooterTimer--;
                 }
@@ -2287,8 +2345,9 @@ ________________________________________________________________________________
                         const h = MOUSE_ART.length;
                         const w = MOUSE_ART[0].length;
                         
-                        // Chase if player in top half (Danger Zone), Retreat if bottom half
-                        const chaseMode = this.playerPos.y < Math.floor(this.mapH/2);
+                        // Chase until player gets close to the bed (Safe Zone)
+                        // Bed starts at bottom, so chase until y is deep (e.g. mapH - 12)
+                        const chaseMode = this.playerPos.y < (this.mapH - 12);
                         
                         // Target centers
                         const targetX = chaseMode ? this.playerPos.x - Math.floor(w/2) : Math.floor((this.mapW - w)/2);
@@ -2378,13 +2437,9 @@ ________________________________________________________________________________
             checkDeath() {
                 if (this.grit <= 0 && !this.isGameOver) {
                     this.isGameOver = true;
-                    // Safety check
-                    if (this.deathReasonEl) {
-                        this.deathReasonEl.textContent = "Vital Signs: ZERO.";
-                    }
-                    if (this.gameOverModal) {
-                        this.gameOverModal.style.display = 'block';
-                    }
+                    // --- UPDATED DEATH LOGIC ---
+                    this.log("CRITICAL FAILURE. VITAL SIGNS ZERO.", 'danger');
+                    this.showDeathScreen();
                 }
             }
 
@@ -2393,6 +2448,18 @@ ________________________________________________________________________________
                 this.grit = MAX_GRIT; // Reset grit
                 this.log("TIMELINE RESET. TRY AGAIN.", 'info');
                 this.startLevel(); 
+            }
+            
+            toggleFullScreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch((e) => {
+                        this.log("Fullscreen blocked: " + e.message, 'danger');
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
             }
 
             render() {
@@ -2623,6 +2690,9 @@ ________________________________________________________________________________
                 document.getElementById('btn-right').onclick = () => this.handleInput(1, 0);
                 document.getElementById('btn-wait').onclick = () => this.handleInput(0, 0);
                 document.getElementById('btn-skip').onclick = () => this.skipLevel();
+                
+                // Full Screen Button Binding
+                document.getElementById('btn-fullscreen').onclick = () => this.toggleFullScreen();
             }
         }
 

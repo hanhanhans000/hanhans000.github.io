@@ -1,125 +1,845 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Level 3: The Bedroom (Vent Entry)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-    body {
-        /* Use Inter font for better mobile/general display, fall back to Courier for ASCII consistency */
-        font-family: 'Inter', 'Courier New', Courier, monospace;
-        background-color: #0d0d0d;
-        color: #888;
-        font-size: 14px;
-        line-height: 14px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-        overflow: auto; /* Allow scrolling if map is larger than viewport */
-    }
-    
-    /* Load Inter font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEON SCUTTLE: Survival Edition</title>
+    <style>
+        :root {
+            /* PALETTE */
+            --bg-color: #1a0510;
+            --grid-bg: #000000;
+            
+            --dominant-pink: #ff007f;
+            --danger-red: #ff3333;
+            --loot-yellow: #ffff00;
+            --safe-green: #00ff66;
+            --toxic-green: #adff2f;
+            --motor-blue: #00ccff;
+            
+            --floor-dim: #552244;
+            --white: #ffffff;
+            
+            --ui-font: 'Courier New', Courier, monospace;
+        }
 
-    #map-container {
-        padding: 10px;
-        margin: 20px; /* Ensure space around the map */
-        max-width: 95vw; /* Fluid width */
-        overflow-x: auto; /* Scroll horizontally if needed */
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--dominant-pink);
+            font-family: var(--ui-font);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
 
-    pre {
-        margin: 0;
-        font-weight: bold;
-        cursor: default;
-        user-select: none;
-        white-space: pre;
-        line-height: 1.1; /* Tighter line height for ASCII art */
-    }
+        /* --- CRT EFFECT --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,0,127,0),
+                rgba(255,0,127,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 150px rgba(20,0,10,0.9);
+            pointer-events: none;
+            z-index: 11;
+        }
 
-    /* --- LEVEL 3: BEDROOM ANIMATIONS & ASSETS --- */
-    /* Shared */
-    .wall { color: #444; }
-    .neon { color: #ff00ff; font-weight: bold; text-shadow: 0 0 5px #ff00ff; }
-    
-    /* Water/Plunge */
-    .l3-water { 
-        color: #00aaff; 
-        text-shadow: 0 0 5px #0ff; 
-        animation: pulseWater 1.5s infinite alternate; /* Added pulse effect */
-    } 
-    .l3-plunge { color: #f00; text-shadow: 0 0 8px red; }
+        /* --- UI LAYOUT --- */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
 
-    /* Rug */
-    .l3-rug { 
-        color: #d94; 
-        opacity: 0.6; 
-        animation: subtleGlow 4s infinite alternate; /* Added subtle glow */
-    } 
+        header {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            border-bottom: 2px solid var(--dominant-pink);
+            padding-bottom: 5px;
+            font-size: 14px;
+            color: var(--dominant-pink);
+            text-shadow: 0 0 5px var(--dominant-pink);
+            flex-shrink: 0;
+        }
 
-    /* Bed Goal */
-    .l3-bed { color: #fff; background-color: #222; text-shadow: 0 0 5px #fff; } 
-    .l3-bed-frame { color: #555; }
-    
-    /* Monitor/Tech */
-    .l3-monitor { color: #3f3; text-shadow: 0 0 5px #0ff; animation: monitorFlicker 0.2s infinite alternate; }
-    @keyframes monitorFlicker { 0% { opacity: 1; } 100% { opacity: 0.9; color: #3f3; } }
+        .stat-box {
+            display: flex;
+            gap: 15px;
+        }
 
-    /* Cat */
-    .l3-cat { color: #aa00ff; text-shadow: 0 0 8px #ff00ff; }
-    .cat-art { 
-        color: #800080; 
-        animation: catBreath 3s ease-in-out infinite; /* Added breathing animation */
-    }
+        .stat {
+            font-weight: bold;
+        }
 
-    /* Drain/Vent & Sewer Wall */
-    .drain-pipe { 
-        color: #4af; 
-        font-weight: bold; 
-        text-shadow: 0 0 5px blue; 
-    }
-    .drain-pipe, .drain-pipe span {
-        /* Ensure children inherit pipe style unless overridden */
-        color: #4af;
-    }
+        /* --- SCROLL WRAPPER FOR BIG MAPS --- */
+        #viewport {
+            flex-grow: 1;
+            display: block; 
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #33001a;
+            overflow: auto;
+            position: relative;
+            
+            scrollbar-width: thin;
+            scrollbar-color: var(--dominant-pink) var(--bg-color);
+        }
 
-    /* Mouse in Vent (New Style) */
-    .l3-mouse { 
-        color: #ffaa00; /* Orange/Brown for a mouse */
-        text-shadow: 0 0 5px #ffaa00; 
-        display: inline-block;
-        animation: mouseWiggle 0.5s infinite alternate;
-    }
+        /* --- THE GRID --- */
+        #grid-container {
+            position: relative;
+            background-color: var(--grid-bg);
+            border: 2px solid var(--dominant-pink);
+            display: grid;
+            gap: 0px; 
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);
+            width: fit-content; 
+            margin: 0 auto; /* CENTER THE CANVAS */
+        }
 
-    /* Keyframe Animations */
-    @keyframes pulseWater { 
-        0% { opacity: 0.8; } 
-        100% { opacity: 1; text-shadow: 0 0 8px #0ff; }
-    }
-    @keyframes subtleGlow {
-        0% { opacity: 0.6; }
-        50% { opacity: 0.75; }
-        100% { opacity: 0.6; }
-    }
-    @keyframes catBreath {
-        0% { transform: scaleY(1); opacity: 0.9; }
-        50% { transform: scaleY(0.98); opacity: 1; }
-        100% { transform: scaleY(1); opacity: 0.9; }
-    }
-    @keyframes mouseWiggle {
-        0% { transform: translateY(0px); }
-        100% { transform: translateY(-0.5px); }
-    }
-</style>
+        .tile {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: default;
+            line-height: 18px;
+            position: relative; 
+            white-space: pre;
+        }
+
+        /* --- ENTITY COLORS --- */
+        .tile.floor { color: var(--floor-dim); z-index: 1; }
+        
+        .tile.wall { 
+            color: var(--dominant-pink); 
+            font-weight: bold;
+            text-shadow: 0 0 2px var(--dominant-pink);
+            z-index: 5;
+        }
+
+        .tile.player { 
+            color: var(--safe-green); 
+            background-color: #002200;
+            font-weight: 900;
+            text-shadow: 0 0 4px var(--safe-green);
+            z-index: 10; 
+            border: 1px solid var(--safe-green); 
+        }
+
+        .tile.enemy {
+            color: var(--danger-red);
+            background-color: #220000;
+            font-weight: bold;
+            text-shadow: 0 0 4px var(--danger-red);
+            z-index: 8;
+        }
+        
+        .tile.human {
+            color: var(--white);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--danger-red);
+            z-index: 9;
+        }
+
+        /* Scooter Style */
+        .tile.scooter {
+            color: var(--motor-blue);
+            font-weight: 900;
+            text-shadow: 0 0 5px var(--motor-blue);
+            z-index: 15;
+            background-color: rgba(0, 204, 255, 0.1);
+        }
+
+        .tile.food { 
+            color: var(--loot-yellow); 
+            font-weight: bold;
+            z-index: 5;
+        }
+        
+        .tile.food.crumb {
+             animation: blink 1s infinite;
+        }
+
+        .tile.poison { 
+            color: var(--danger-red); 
+            opacity: 0.7;
+            z-index: 5;
+        }
+
+        .tile.glue { 
+            color: var(--dominant-pink); 
+            opacity: 0.5;
+            text-decoration: line-through;
+            z-index: 2;
+        }
+
+        .tile.exit { 
+            background-color: var(--dominant-pink);
+            color: black;
+            font-weight: bold;
+            box-shadow: 0 0 10px var(--dominant-pink);
+            z-index: 5;
+        }
+
+        /* --- HAZARD OVERLAYS --- */
+        .tile.warning {
+            background-color: rgba(255, 51, 51, 0.3);
+            color: var(--white);
+            animation: blink-fast 0.5s infinite;
+        }
+
+        .tile.impact {
+            background-color: var(--white);
+            color: var(--danger-red);
+            font-weight: 900;
+            animation: shake 0.2s;
+            z-index: 20; 
+        }
+        
+        .tile.spray-impact {
+            background-color: rgba(173, 255, 47, 0.2);
+            color: var(--toxic-green);
+            font-weight: bold;
+            animation: blink-fast 0.2s infinite;
+            z-index: 20;
+        }
+
+        /* --- LOG CONSOLE --- */
+        #log-console {
+            width: 100%;
+            max-width: 800px;
+            height: 80px;
+            background-color: #11050a;
+            border: 1px solid var(--dominant-pink);
+            padding: 5px;
+            font-size: 12px;
+            overflow-y: auto;
+            color: #ff8ec7;
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 5px;
+            white-space: pre-wrap;
+            flex-shrink: 0;
+        }
+        
+        .log-entry { margin-bottom: 4px; border-bottom: 1px dashed #33001a; }
+        .log-entry.new { color: var(--safe-green); }
+        .log-entry.danger { color: var(--danger-red); font-weight: bold; }
+        .log-entry.info { color: var(--loot-yellow); }
+
+        /* --- SKIP BUTTON --- */
+        #btn-skip {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 5px;
+            padding: 8px;
+            background: transparent;
+            border: 1px dashed var(--dominant-pink);
+            color: var(--dominant-pink);
+            font-family: var(--ui-font);
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        #btn-skip:active {
+            background: var(--dominant-pink);
+            color: black;
+        }
+
+        /* --- CONTROLS --- */
+        #mobile-controls {
+            display: none; 
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 100%;
+            max-width: 300px;
+            flex-shrink: 0;
+            margin-bottom: 10px;
+        }
+
+        .control-btn {
+            background: #220011;
+            border: 1px solid var(--dominant-pink);
+            color: var(--dominant-pink);
+            padding: 10px;
+            border-radius: 0;
+            text-align: center;
+            font-size: 18px;
+            touch-action: manipulation;
+        }
+        
+        .control-btn:active { background: var(--dominant-pink); color: black; }
+
+        @media (max-width: 768px) {
+            #mobile-controls { display: grid; }
+            .tile { width: 14px; height: 14px; font-size: 10px; } 
+        }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        @keyframes blink-fast { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(0, 0); } }
+        @keyframes neon-flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor; opacity: 1; }
+            20%, 24%, 55% { text-shadow: none; opacity: 0.5; }
+        }
+
+        #game-over-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000;
+            border: 4px solid var(--danger-red);
+            padding: 30px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 0 50px var(--danger-red);
+        }
+        
+        button.restart-btn {
+            background: var(--dominant-pink);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-family: var(--ui-font);
+            font-weight: bold;
+            margin-top: 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px var(--dominant-pink);
+        }
+
+        /* --- DECORATIVE HEADER --- */
+        #street-scene {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.1em;
+            color: var(--floor-dim);
+            margin-bottom: 10px;
+            width: 100vw;
+            height: 240px; 
+            overflow: hidden; 
+            position: relative;
+            flex-shrink: 0;
+            font-weight: bold;
+            background: #0d0208;
+            border-bottom: 1px solid var(--dominant-pink);
+            margin-left: -10px; 
+            margin-right: -10px; 
+            text-align: center; /* Center Content */
+        }
+
+        #market-scene {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.1em;
+            color: var(--floor-dim);
+            margin-top: 10px;
+            margin-bottom: 5px;
+            width: 100vw; 
+            height: 160px; 
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+            font-weight: bold;
+            background: #0d0208;
+            border-top: 1px solid var(--dominant-pink);
+            margin-left: -10px; 
+            margin-right: -10px; 
+            text-align: center; /* Center Content */
+        }
+        
+        .map {
+            display: inline-block;
+            white-space: pre;
+            position: relative; /* Changed from absolute to allow text-align centering */
+            left: 0;
+            top: 10px;
+            transition: transform 0.2s ease-out; 
+            text-align: left; /* Ensure ASCII art aligns correctly internally */
+        }
+
+        /* --- ANIMATIONS & ASSETS --- */
+        
+        /* Water Ripple: Blue to Cyan cycle */
+        .water { display: inline-block; font-weight: bold; }
+        .water::after { content: "~~~~~~~~"; animation: rippleAnim 2s infinite linear; }
+        @keyframes rippleAnim {
+            0%   { color: #0088ff; }
+            50%  { color: #00ffff; text-shadow: 0 0 3px #0088ff; }
+            100% { color: #0088ff; }
+        }
+
+        /* Swimming Fish: Up and Down bobbing */
+        .fish { display: inline-block; font-weight: bold; color: #add8e6; }
+        .fish::after { content: "><(((('>"; animation: swimAnim 1s infinite ease-in-out alternate; }
+        @keyframes swimAnim {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(-3px); }
+        }
+
+        /* Blood Pulse: Dark red to bright red */
+        .blood { display: inline-block; font-weight: bold; }
+        .blood::after { content: "~BLOOD~"; animation: bloodAnim 3s infinite ease-in-out; }
+        @keyframes bloodAnim {
+            0%   { color: #550000; }
+            50%  { color: #aa0000; text-shadow: 0 0 5px #550000; }
+            100% { color: #550000; }
+        }
+
+        /* Blood Drop Animation */
+        .drop { display: inline-block; color: #ff0000; font-weight: bold; animation: dropAnim 0.8s infinite linear; }
+        @keyframes dropAnim {
+            0% { transform: translateY(0); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(10px); opacity: 0; }
+        }
+
+        /* Flopping Fish Animation */
+        .flopper { display: inline-block; color: #88ccff; font-weight: bold; animation: flopAnim 0.15s infinite alternate; }
+        @keyframes flopAnim {
+            0% { transform: rotate(-30deg) translateY(0); }
+            50% { transform: rotate(0deg) translateY(-2px); }
+            100% { transform: rotate(30deg) translateY(0); }
+        }
+
+        /* Neon Sign Flicker */
+        .neon { color: #ff00ff; font-weight: bold; animation: neonAnim 0.1s infinite alternate; }
+        @keyframes neonAnim {
+            0%   { text-shadow: 0 0 2px #ff00ff; opacity: 1; }
+            100% { text-shadow: 0 0 5px #ff00ff; opacity: 0.9; }
+        }
+
+        /* Vegetable Sway */
+        .veg { display: inline-block; color: #4f4; transform-origin: bottom center; animation: swayAnim 3s infinite ease-in-out; }
+        @keyframes swayAnim {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        /* Ice Sparkle */
+        .ice { color: #cceeff; animation: sparkleAnim 1.5s infinite alternate; }
+        @keyframes sparkleAnim {
+            0% { text-shadow: 0 0 0 #fff; opacity: 0.8; }
+            100% { text-shadow: 0 0 4px #fff; opacity: 1; color: #fff; }
+        }
+
+        /* Crab Fight Animations */
+        .crab-left { display: inline-block; color: #d66; animation: fightLeft 0.5s infinite cubic-bezier(.36,.07,.19,.97) alternate; }
+        .crab-right { display: inline-block; color: #d66; animation: fightRight 0.5s infinite cubic-bezier(.36,.07,.19,.97) alternate; }
+
+        @keyframes fightLeft {
+            0% { transform: translateX(0) rotate(0deg); }
+            40% { transform: translateX(0) rotate(-5deg); } /* Wind up */
+            100% { transform: translateX(4px) rotate(15deg); color: #ff0000; } /* Strike! */
+        }
+
+        @keyframes fightRight {
+            0% { transform: translateX(0) rotate(0deg); }
+            40% { transform: translateX(0) rotate(5deg); } /* Wind up */
+            100% { transform: translateX(-4px) rotate(-15deg); color: #ff0000; } /* Strike! */
+        }
+
+        /* Spice Color Shift */
+        .spice { display: inline-block; animation: spiceAnim 4s infinite linear; }
+        @keyframes spiceAnim {
+            0% { color: #ffaa00; }
+            33% { color: #d2691e; }
+            66% { color: #8b4500; }
+            100% { color: #ffaa00; }
+        }
+
+        /* Durian Stink Pulse */
+        .durian { color: #ccaa00; font-weight: bold; animation: stinkAnim 2s infinite ease-in-out; }
+        @keyframes stinkAnim {
+            0% { text-shadow: 0 0 0 #ccaa00; }
+            50% { text-shadow: 0 0 8px #554400; color: #ffeeaa; }
+            100% { text-shadow: 0 0 0 #ccaa00; }
+        }
+
+        /* Sewer Steam */
+        .sewer { color: #333; font-weight: bold; text-shadow: 0 1px 0 #555; }
+        .steam { display: inline-block; color: #666; opacity: 0; animation: steamAnim 4s infinite linear; }
+        @keyframes steamAnim {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            20% { opacity: 0.6; }
+            100% { transform: translateY(-8px) scale(1.5); opacity: 0; }
+        }
+
+        /* Motorcycle Animation */
+        .street-layer {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            border-top: 2px dashed #333;
+            margin-top: 10px;
+            color: #555;
+        }
+        
+        .scooter {
+            display: inline-block;
+            color: #5599ff; /* Moped Color */
+            font-weight: bold;
+            position: absolute;
+            top: 20px;
+            transform: scaleX(-1); /* Flip horizontally to face Right */
+            animation: driveLeft 12s linear infinite;
+        }
+
+        @keyframes driveLeft {
+            from { left: 100%; } /* Start off-screen Right */
+            to { left: -600px; } /* Move off-screen Left */
+        }
+
+        .dragon { color: #ff00ff; font-weight: bold; }
+        .melon  { color: #00aa00; font-weight: bold; }
+        .melon-in { color: #ff3333; }
+
+        /* --- STAGE 2 KITCHEN ANIMATIONS --- */
+        .fire { display: inline-block; font-weight: bold; }
+        .fire::after { content: "[  ▲▲  ]"; animation: fireAnim 0.4s infinite steps(1); }
+        @keyframes fireAnim {
+            0%   { content: "[  ▲▲  ]"; color: #ff8800; text-shadow: 0 0 5px #ff4400; }
+            33%  { content: "[ ▲▲▲▲ ]"; color: #ff4400; text-shadow: 0 0 8px #ff0000; }
+            66%  { content: "[  ▲▲  ]"; color: #ffcc00; text-shadow: 0 0 5px #ff8800; }
+        }
+
+        .gas { display: inline-block; font-weight: bold; }
+        .gas::after { content: "[≈≈≈≈≈≈≈≈≈≈≈]"; animation: gasAnim 1.5s infinite steps(1); }
+        @keyframes gasAnim {
+            0%   { content: "[≈≈≈≈≈≈≈≈≈≈≈]"; color: #0088ff; text-shadow: 0 0 2px #0088ff; }
+            50%  { content: "[ ≈≈≈≈≈≈≈≈≈ ]"; color: #00ccff; text-shadow: 0 0 4px #00ccff; }
+        }
+
+        .heat { display: inline-block; font-weight: bold; }
+        .heat::after { content: "[▒▒▒▒▒▒▒]"; animation: heatAnim 2s infinite alternate; }
+        @keyframes heatAnim {
+            0%   { content: "[▒▒▒▒▒▒▒]"; color: #550000; }
+            100% { content: "[███████]"; color: #ff0000; text-shadow: 0 0 10px #aa0000; }
+        }
+
+        /* Prep Station Animations */
+        .chop { display: inline-block; color: #ccc; }
+        .chop { animation: chopAnim 0.15s infinite alternate; }
+        @keyframes chopAnim {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-3px); }
+        }
+
+        .sauce-anim { display: inline-block; color: #f44; font-weight: bold; }
+        .sauce-anim { animation: sauceAnim 1.5s infinite; }
+        @keyframes sauceAnim {
+            0% { color: #800; text-shadow: none; }
+            50% { color: #f00; text-shadow: 0 0 8px red; }
+            100% { color: #800; text-shadow: none; }
+        }
+
+        /* Smoke Animation */
+        .smoke-anim { display: inline-block; color: #888; }
+        .smoke-anim { animation: smokeFloat 2s infinite linear; }
+        @keyframes smokeFloat {
+            0% { opacity: 0.3; transform: translateY(0); text-shadow: 0 0 0 #fff; }
+            50% { opacity: 0.8; transform: translateY(-2px); text-shadow: 0 -2px 4px #fff; }
+            100% { opacity: 0.3; transform: translateY(-4px); text-shadow: 0 -4px 8px #fff; }
+        }
+
+        /* Water Leak & Drain Animation */
+        .water-leak { display: inline-block; width: 15ch; color: #4af; font-weight: bold; vertical-align: top; }
+        .water-leak::after { content: "( ~~~ ~~~ ~~~ )"; animation: waterFlow 1.0s infinite steps(1); }
+        @keyframes waterFlow {
+            0%   { content: "( ~~~ ~~~ ~~~ )"; color: #4af; }
+            25%  { content: "(  ~   ~   ~  )"; color: #4ee; text-shadow: 0 0 5px #0ff; }
+            50%  { content: "( ~ ~ ~ ~ ~ ~ )"; color: #4af; }
+            75%  { content: "(~~  ~~  ~~  ~)"; color: #4ee; text-shadow: 0 0 5px #0ff; }
+        }
+
+        .drain-pipe { display: inline-block; color: #4af; font-weight: bold; text-shadow: 0 0 5px blue; }
+        .drain-pipe { animation: pipeFlow 1.5s infinite linear; }
+        @keyframes pipeFlow {
+            0% { opacity: 0.4; color: #4af; }
+            50% { opacity: 1; color: #aff; text-shadow: 0 0 8px cyan; }
+            100% { opacity: 0.4; color: #4af; }
+        }
+
+        /* --- LEVEL 3: BEDROOM ANIMATIONS & ASSETS --- */
+        /* Shared */
+        .l3-neon { color: #ff00ff; font-weight: bold; text-shadow: 0 0 5px #ff00ff; }
+        
+        /* Water/Plunge */
+        .l3-water { 
+            color: #00aaff; 
+            text-shadow: 0 0 5px #0ff; 
+            animation: pulseWater 1.5s infinite alternate; 
+        } 
+        .l3-plunge { color: #f00; text-shadow: 0 0 8px red; }
+
+        /* Rug */
+        .l3-rug { 
+            color: #d94; 
+            opacity: 0.6; 
+            animation: subtleGlow 4s infinite alternate; 
+        } 
+
+        /* Bed Goal */
+        .l3-bed { color: #fff; background-color: #222; text-shadow: 0 0 5px #fff; } 
+        .l3-bed-frame { color: #555; }
+        
+        /* Monitor/Tech */
+        .l3-monitor { color: #3f3; text-shadow: 0 0 5px #0ff; animation: monitorFlicker 0.2s infinite alternate; }
+        @keyframes monitorFlicker { 0% { opacity: 1; } 100% { opacity: 0.9; color: #3f3; } }
+
+        /* Cat */
+        .l3-cat { color: #aa00ff; text-shadow: 0 0 8px #ff00ff; }
+        .cat-art { 
+            color: #800080; 
+            animation: catBreath 3s ease-in-out infinite; 
+        }
+
+        /* Mouse in Vent */
+        .l3-mouse { 
+            color: #ffaa00; /* Orange/Brown for a mouse */
+            text-shadow: 0 0 5px #ffaa00; 
+            display: inline-block;
+            animation: mouseWiggle 0.5s infinite alternate;
+        }
+
+        /* Keyframe Animations */
+        @keyframes pulseWater { 
+            0% { opacity: 0.8; } 
+            100% { opacity: 1; text-shadow: 0 0 8px #0ff; }
+        }
+        @keyframes subtleGlow {
+            0% { opacity: 0.6; } 
+            50% { opacity: 0.75; }
+            100% { opacity: 0.6; }
+        }
+        @keyframes catBreath {
+            0% { transform: scaleY(1); opacity: 0.9; } 
+            50% { transform: scaleY(0.98); opacity: 1; }
+            100% { transform: scaleY(1); opacity: 0.9; }
+        }
+        @keyframes mouseWiggle {
+            0% { transform: translateY(0px); } 
+            100% { transform: translateY(-0.5px); }
+        }
+
+        /* --- ASSETS --- */
+        .wall    { color: #444; }
+        .sign    { color: #fff; background-color: #333; padding: 0 2px; }
+        .banana  { color: #ff0; font-weight: bold; } /* Bright Yellow */
+        .meat    { color: #f44; }
+        .mud     { color: #654; } /* The ground texture */
+        .fruit   { color: #fa0; } /* Orange/Citrus color */
+        
+        /* New Entrance Assets */
+        .staff-only { color: #fff; background-color: #aa0000; font-weight: bold; padding: 0 2px; }
+        .curtain { color: #88ccff; opacity: 0.7; }
+        .dark-alley { background-color: #111; color: #333; }
+        .crate { color: #8b4513; }
+
+    </style>
 </head>
 <body>
 
-<!-- ASCII Dungeon Map Container -->
-<div id="map-container">
-<pre id="game-stage">
-(FROM KITCHEN)
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div id="game-container">
+        <header>
+            <div class="title">NEON SCUTTLE</div>
+            <div class="stat-box">
+                <div class="stat" id="level-display">L:1</div>
+                <div class="stat" id="grit-display" style="color:var(--safe-green)">GRIT:40</div>
+            </div>
+        </header>
+
+        <!-- ASCII DECORATION (Content populated by JS) -->
+        <div id="street-scene" style="display:none;">
+            <div class="map"></div>
+        </div>
+
+        <div id="viewport">
+            <div id="grid-container"></div>
+        </div>
+
+        <!-- BOTTOM MARKET SCENE (Content populated by JS) -->
+        <div id="market-scene" style="display:none;">
+            <div class="map"></div>
+        </div>
+
+        <div id="log-console">
+            <div class="log-entry">> SYSTEM REBOOT...</div>
+        </div>
+
+        <button id="btn-skip">>> FORCE ASCEND (SKIP) >></button>
+
+        <div id="mobile-controls">
+            <div></div>
+            <button class="control-btn" id="btn-up">▲</button>
+            <div></div>
+            <button class="control-btn" id="btn-left">◀</button>
+            <button class="control-btn" id="btn-wait">●</button>
+            <button class="control-btn" id="btn-right">▶</button>
+            <div></div>
+            <button class="control-btn" id="btn-down">▼</button>
+            <div></div>
+        </div>
+    </div>
+
+    <div id="game-over-modal">
+        <h2 style="color:var(--danger-red)">WAKE UP</h2>
+        <p id="death-reason" style="color:white">The dream ends.</p>
+        <button class="restart-btn" onclick="game.retryLevel()">TRY AGAIN</button>
+    </div>
+
+    <script>
+        // --- CONSTANTS ---
+        const MAX_GRIT = 40.0;
+        const MOVES_PER_HUNGER = 3; 
+        const TILE_SIZE = 18; 
+        
+        const TILES = {
+            PLAYER: '&',
+            FOOD: '$', 
+            FOOD_CHUNK: 'F', 
+            POISON: 'x',
+            GLUE: '%',
+            EXIT: 'E',
+            WALL: '#',
+            ENEMY: '!' 
+        };
+
+        // --- STAGE DECORATIONS ---
+        const STAGE_DECO = {
+            1: { // WET MARKET
+                top: `      (STREET ENTRANCE)
+             ||
+_____________||_________________________________________________________________________________________________________________________________________________________
+________________________________________________________________________________________________________________________________________________________________________
+   .---.                     .---.                                                                                                                                     |
+  (  <span class="sign">$</span>  )  [<span class="sign">FRESH CATCH</span>]    (  <span class="sign">$</span>  )                                                                                                                        (SERVICE ENTRANCE) |
+   '---'  +-------------+    '---'                                                                                                                                _____|_____
+    ||    |  /·.¸      |     ||        [<span class="neon">FISH $15</span>]             [<span class="neon">CRAB $28</span>]           [<span class="neon">PORK $12</span>]                                                             | <span class="staff-only">STAFF ONLY</span>|
+    ||    | /¸...¸:·   |     ||      +--------------+          +--------------+       <span class="wall">.---.   .---.   .---.</span>                                                     | ___________ |
+    ||    |             |     ||      | ~  <span class="fish"></span> ~|          |  <span class="crab-left">(V)</span>    <span class="crab-right">(V)</span>  |      <span class="meat">(   ( ) (   ( ) (   ( )</span>                                                     | <span class="curtain">| | | | | |</span> |
+   _||_   | <span class="ice"><span class="flopper">><></span> <span class="flopper">><></span> <span class="flopper">><></span></span> |    _||_     | ~  <span class="fish"></span> ~|          |  <span class="crab-left">(@@)</span>   <span class="crab-right">(@@)</span> |      <span class="meat"> \ <span class="drop">,</span> )   \\ <span class="drop">.</span> )   \\ <span class="drop">'</span> )</span>                                                     | <span class="curtain">| | | | | |</span> |
+  /____\\  +-------------+   /____\\    +--------------+          +--------------+       <span class="meat"> ) (     ) (     ) (</span>                                                     | <span class="curtain">| | | | | |</span> |
+                                                                                      <span class="wall">| |     | |     | |</span>                                                     | <span class="curtain">: : : : : :</span> |
+  <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\`-´░░░░░\`-´░░░░░\`-´░░░░░░░</span>                                                     | <span class="curtain">. . . . . .</span> |
+  <span class="mud">░░</span> <span class="sewer"> .===. </span>  <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span>                                                     |             |
+  <span class="mud">░░</span> <span class="sewer"> ||||| </span><span class="steam">~</span>   <span class="mud">░░</span>                                      <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span> <span class="blood"></span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░</span>                                                     |  <span class="crate">[CRATES]</span>   |
+  <span class="mud">░░</span> <span class="sewer"> '===' </span>    <span class="mud">░░</span>                                      <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span> <span class="meat">~~~~~~~</span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░</span>                                                     |  <span class="crate">[||||||]</span>   |
+  <span class="mud">░░</span> <span class="sewer"> '===' </span>    <span class="mud">░░</span>                                      <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span> <span class="meat">~~~~~~~</span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░</span>                                                     |  <span class="crate">[||||||]</span>   |
+  <span class="mud">░░░░░░░░░░░░░░</span>                      <span class="mud">░░░░░░</span> <span class="ice">~SLIPPERY~</span> <span class="mud">░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░</span>                                                     |__<span class="crate">[||||||]</span>___|`,
+                
+                bottom: `   (VEGETABLES)                  (DURIANS)           (BANANAS)               (SPICES & DRY GOODS)           (LOCAL GREENS)           (CITRUS MOUNTAIN)                   \\
+   <span class="veg">vvv   vvv   vvv</span>               <span class="durian"> ^,^   ^,^</span>          <span class="banana"> //   \\\\</span>               <span class="spice">^^^      ^^^</span>                   <span class="veg">{{{{{{{}}}}</span>              <span class="fruit"> o  o  o </span>                      \\
+  <span class="veg">(   ) (   ) (   )</span>              <span class="durian">(* *) (* *)</span>        <span class="banana">((     ))</span>              <span class="spice">^^^^^    ^^^^^</span>                   <span class="veg">{{{{{{}}}</span>               <span class="fruit">o o  o o </span>                       \\  (TO KITCHEN)
+   <span class="veg">\\ /   \\ /   \\ /</span>               <span class="durian"> \`~\'   \`~\'</span>        <span class="banana">((((   ))))</span>             <span class="spice">^^^^^^^  ^^^^^^^</span>                   <span class="veg">{{{{{{{}}</span>              <span class="fruit">o  o  o  o</span>                        >
+   <span class="veg">_Y_   _Y_   _Y_</span>               [<span class="neon">$18/KG </span>]          [<span class="neon">$3/BUN </span>]              <span class="spice">[=======][=======]</span>                 <span class="wall">[=======]</span>              <span class="wall">[==========]</span>                       /
+  +---------------+             (DRAGONFRUIT)       (WATERMELONS)          | <span class="neon">$5/100g</span>|| <span class="neon">$12/kg</span> |                 |<span class="neon">$4/BDL </span>|              | <span class="neon">$6/BAG   </span> |                       /
+  | <span class="neon">$2 / KILO !!!</span> |               <span class="dragon"> ,^,   ,^,</span>         <span class="melon"> /'''\\ </span>             +-------++-------+                 +-------+              +----------+                     /
+  +---------------+              <span class="dragon"><, ,> <, ,></span>        <span class="melon">(::<span class="melon-in">:::</span>:)</span>                                                                                                      /
+                                  <span class="dragon"> \`~\'   \`~\'</span>         <span class="melon"> \\___/ </span>                                                                                                      /
+                                 [<span class="neon">$2/EA  </span>]          [<span class="neon">$5/EA  </span>]                                                                                                      /
+____________________________________________________________________________________________________________________________________________________________________/`
+            },
+            2: { // RESTAURANT KITCHEN
+                top: `                          ||                                                                       
+                          ||                                                                       
++-------------------------||-----------------------------------------------------------------------+
+|    (WALK-IN FRIDGE)     ||                        (DRY STORAGE WAREHOUSE)                        |
+|    +----------------+   ||   +---------------------------------------------------------------+   |
+|    |  ?   ?   ?     |   ||   |                                                               |   |
+|    |  |   |   |     |   ||   |                          )_(        _[_]_                         |   |
+|    | (S) (S) (S)    |   ||   |                         .'-'.      /_:_\\                         |   |
+|    | (S) (S) (S)    |   ||   |   /-\\         /-\\       |:::|      )_:_(       {:}       {:}      |   |
+|    |  U   U   U     |   ||   |  ( R )       ( F )      |:::|      |:._|       {S}       {M}      |   |
+|    | [|^^|]  [(@)]  |   ||   |   \\_/         \\_/       '-.-'      \`-.-'       {_}       {_}      |   |
+|    | [====]  [===]  |   ||   |  [====]     [=====]     [===]     [===]     [=====]     [===]   |
+|    |                |   ||   |===============================================================|   |
+|    |      _   ____  |   ||   |                          mmm        mmm          mmm            |   |
+|    |     (_) (____) |   ||   |    __          __         )-(        )-(          )-(             |   |
+|    |     (_)  |@@|  |   ||   |   (  )        (  )       (   )      (   )        (   )            |   |
+|    |     (_)  \\__/  |   ||   |   (__)        (__)       |   |      |   |        |   |            |   |
+|    |      _    U    |   ||   |   (  )        (  )       |   |      |   |        |   |            |   |
+|    | [~@@~]  [<>< ] |   ||   |   (__)        (__)       |___|      |___|        |___|            |   |
+|    | [====]  [====] |   ||   |   (____)      (____)      [|X|]      [|/|]      (oooo)        |   |
+|    +-------(0)------+   ||   +---------------------------------------------------------------+   |
+|    +-----+-----+-----+  ||   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+       |
+|    |     |     |     |  ||   |     |     |     |     |     |     |     |     |     |     |       |
+|    +-----+-----+-----+  ||   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+       |
+|   +---------------------++-------------------------------------------------------------------+   |
+|   |  THE HOT LINE (COOKING STATION)                                                          |   |
+|   |                                                                                          |   |
+|   |   (WOK STATION 1)          (WOK STATION 2)           (STOVE TOP)            (OVENS)      |   |
+|   |                                                                                          |   |
+|   |       (  )                     (  )                   (  ) (  )             [~~~~~]      |   |
+|   |        )(                       )(                     )(   )(              [~~~~~]      |   |
+|   |       (__)                     (__)                   (__) (__)             [__o__]      |   |
+|   |      /    \\                   /    \\                 /    \\ /    \\            |     |      |   |
+|   |     |______|                 |______|               |_____|_____|            |_____|      |   |
+|   |     <span class="fire"></span>                 <span class="fire"></span>               <span class="gas"></span>            <span class="heat"></span>      |   |
+|   |                                                                                          |   |
+|   +------------------------------------------------------------------------------------------+   |
+`, 
+                bottom: `|   +-----------------------------------------------------+   +--------------------------------+   |
+|   |  PREP STATION (STAINLESS STEEL)                     |   |  DISH PIT & WASHING            |   |
+|   |                                                     |   |                                |   |
+|   |    ___________       ___________       ___________  |   |    \\______/       [|||||||]    |   |
+|   |   |___________}     |___________}     |___________} |   |     [ SINK ]       [PLATES ]    |   |
+|   |    (Chopping)        (Plating)         (Saucing)    |   |     [______]       [|||||||]    |   |
+|   |      <span class="chop">_||_</span>              (    )             <span class="chop">_||_</span>      |   |        |                       |   |
+|   |     ( vvv)            (      )          (<span class="sauce-anim"> @@@</span>)     |   |        | <span class="water-leak"></span>        |   |
+|   |     (Veg )            (Plate)            (Meat)     |   |        |                       |   |
+|   +-----------------------------------------------------+   +-------|------------------------+   |
+|                                                                     |                            |
+|    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+-----+-----+-----+-----+    |
+|    |     |     |     |     |     |     |     |     |     |     |    |     |     |     |     |    |
+|    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+-----+-----+-----+-----+    v
+|    |     |     |     |     |     |     |     |     |     |     |    |     |     |     |     |  (TO THE PIPE)
++---------------------------------------------------------------------<span class="drain-pipe">|</span>                            |`
+            },
+            3: { // BEDROOM
+                top: `(FROM KITCHEN)
                           <span class="drain-pipe">||</span>
                           <span class="drain-pipe">||</span>
       <span class="drain-pipe">+=================++=================+</span>
@@ -127,10 +847,10 @@
       <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓▓▓▓▓||▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   |</span>
       <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓▓▓▓▓||▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   |</span>
       <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓▓▓▓▓||▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   |</span>
-      <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓     </span><span class="l3-mouse">_  _</span><span class="drain-pipe">     ▓▓▓▓▓▓▓▓   |</span>
+      <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓    </span><span class="l3-mouse">_  _</span><span class="drain-pipe">     ▓▓▓▓▓▓▓▓   |</span>
       <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓    </span><span class="l3-mouse">(o)(o)--.</span><span class="drain-pipe"> ▓▓▓▓▓▓▓▓   |</span> <span class="l3-mouse"><--- THE MOUSE</span>
-      <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓     </span><span class="l3-mouse">\../ ( )</span><span class="drain-pipe"> ▓▓▓▓▓▓▓▓   |</span>      <span class="l3-mouse">(Blocking path)</span>
-      <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓     </span><span class="l3-mouse">m\/m--m'-</span><span class="drain-pipe"> ▓▓▓▓▓▓▓▓   |</span>
+      <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓    </span><span class="l3-mouse">\\../ ( )</span><span class="drain-pipe"> ▓▓▓▓▓▓▓▓   |</span>      <span class="l3-mouse">(Blocking path)</span>
+      <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓    </span><span class="l3-mouse">m\\/m--m'-</span><span class="drain-pipe"> ▓▓▓▓▓▓▓▓   |</span>
       <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓▓▓▓▓||▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   |</span>
       <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓▓▓▓▓||▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   |</span>
       <span class="drain-pipe">|   ▓▓▓▓▓▓▓▓▓▓▓▓vv▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   |</span>
@@ -140,59 +860,868 @@
                           <span class="drain-pipe">||</span>
                           <span class="drain-pipe">vv</span>
 +-------------------<span class="drain-pipe">||</span>---------------------------+
-|  SMALL BATHROOM    <span class="drain-pipe">V</span>  (Vent Entry)             |
-|                                                |
-|  [ BATHTUB ]       [ THE TOILET ]             |
-|  +---------+       ______________             |
-|  | |<span class="l3-water">W</span>| /  /|       |            |             |
-|  | |<span class="l3-water">W</span>||  | |       | [||]   (<span class="l3-plunge">P</span>) |             |
-|  | |<span class="l3-water">W</span>||__| |       |____________|             |
-|  | |<span class="l3-water">W</span>|     |        _ /   \ _                 |
-|  | |<span class="l3-water">W</span>|(Crt)|       ( (     ) ) (Bowl)         |
-|  |___|_____|        \ \____/ /                 |
-|                      \______/                  |
-|   (TILED FLOOR)             ||                 |
-|   +-----+-----+           __||__               |
-|   |     |     |          |______|              |
-|   +-----+-----+                                |
-|   |     |     |          [ BATH MAT ]          |
-|   +-----+-----+           <span class="l3-rug">MMMMMMMMMMM</span>          |
-+-----------------------------    -------------+
-                              | [<span class="wall">DOOR</span>]|        
-                              |       |        
-                              |       |        
-+----------------------------------+    +-------------------------------------+
-|   <span class="neon">THE BEDROOM</span>                   |    |                                     |
-|                                 |    |     <span class="l3-bed-frame">.-----------.</span>                   |
-|   (WARDROBE)                    <span class="wall">'-------'</span>   | <span class="l3-bed-frame">.-------.</span> |                   |
-|  .-----------------.                       | | <span class="l3-monitor">C:\>_</span> | | (WORK DESK)         |
-|  |  ___________    |                       | <span class="l3-bed-frame">'-------'</span> |                   |
-|  | |  |     |  |   |                       | [Kb] [Ms] |                   |
-|  | |  |     |  |   |                       |___________|                   |
-|  | |  '--.  |  |   |                        /        \                    |
-|  | | [==] '--' |   |                       /_________\\                   |
-|  | '-----------'   |                                                     |
-|  '-----------------'                                 (WINDOW)            |
-|                                                      <span class="l3-bed-frame">+-------+</span>           |
-|                                                      |  * * |           |
-|  (QUEEN BED)                                         | * * |           |
-|  <span class="l3-bed">.---.________</span>                              <span class="l3-bed-frame">+-------+</span>           |
-| /   /         /|        <span class="l3-rug">:::::::::::::::::</span>           | [===] |           |
-| /___/________/ |        <span class="l3-rug">::  PATTERNED  ::</span>           |       |           |
-| |   |  ====  | |        <span class="l3-rug">::    AREA     ::</span>           |       |           |
-| |___|________|/         <span class="l3-rug">:::::::::::::::::</span>           | [===] |           |
-|                         <span class="l3-rug">:::::::::::::::::</span>           |       |           |
-|                                                     |   /_\ |           |
-|                            <span class="l3-cat">(SLEEPING CAT)</span>           |  (<span class="l3-cat">O O</span>)|           |
-|                             <span class="cat-art">|W|/,, |  (`\</span>           <span class="l3-bed-frame">+-------+</span>           |
-|                          <span class="cat-art">_.|o o |_   ) )</span>            (CAT TREE)          |
-|                          <span class="cat-art">-(((---(((--------</span>                             |
-|                                                                         |
-+--------------------------------------------------------------------------------+
-</pre>
-</div>
+|  SMALL BATHROOM    <span class="drain-pipe">V</span>  (Vent Entry)             |
+|                                                |
+|  [ BATHTUB ]       [ THE TOILET ]              |
+|  +---------+       ______________              |
+|  | |<span class="l3-water">W</span>| /  /|       |            |              |
+|  | |<span class="l3-water">W</span>||  | |       | [||]   (<span class="l3-plunge">P</span>) |              |
+|  | |<span class="l3-water">W</span>||__| |       |____________|              |
+|  | |<span class="l3-water">W</span>|     |        _ /   \\ _                  |
+|  | |<span class="l3-water">W</span>|(Crt)|       ( (     ) ) (Bowl)         |
+|  |___|_____|        \\ \\____/ /                 |
+|                      \\______/                  |
+|   (TILED FLOOR)            ||                  |
+|   +-----+-----+          __||__                |
+|   |     |     |         |______|               |
+|   +-----+-----+                                |
+|   |     |     |          [ BATH MAT ]          |
+|   +-----+-----+           <span class="l3-rug">MMMMMMMMMMM</span>          |
++-----------------------------    -------------+
+                              | [<span class="wall">DOOR</span>]|        
+                              |       |        
+                              |       |        
++----------------------------------+    +-------------------------------------+`,
+                
+                bottom: `|   <span class="l3-neon">THE BEDROOM</span>                   |    |                                     |
+|                                 |    |     <span class="l3-bed-frame">.-----------.</span>                   |
+|   (WARDROBE)                    <span class="wall">'-------'</span>   | <span class="l3-bed-frame">.-------.</span> |                   |
+|  .-----------------.                       | | <span class="l3-monitor">C:\\>_</span> | | (WORK DESK)         |
+|  |  ___________    |                       | <span class="l3-bed-frame">'-------'</span> |                   |
+|  | |  |     |  |   |                       | [Kb] [Ms] |                   |
+|  | |  |     |  |   |                       |___________|                   |
+|  | |  '--.  |  |   |                        /        \\                    |
+|  | | [==] '--' |   |                       /_________\\\\                   |
+|  | '-----------'   |                                                     |
+|  '-----------------'                                 (WINDOW)            |
+|                                                      <span class="l3-bed-frame">+-------+</span>           |
+|                                                      |  * * |           |
+|   (QUEEN BED)                                        | * * |           |
+|   <span class="l3-bed">.---.________</span>                              <span class="l3-bed-frame">+-------+</span>           |
+| /   /         /|        <span class="l3-rug">:::::::::::::::::</span>           | [===] |           |
+| /___/________/ |        <span class="l3-rug">::  PATTERNED  ::</span>           |       |           |
+| |   |  ====  | |        <span class="l3-rug">::    AREA     ::</span>           |       |           |
+| |___|________|/         <span class="l3-rug">:::::::::::::::::</span>           | [===] |           |
+|                         <span class="l3-rug">:::::::::::::::::</span>           |       |           |
+|                                                     |   /_\\ |           |
+|                            <span class="l3-cat">(SLEEPING CAT)</span>           |  (<span class="l3-cat">O O</span>)|           |
+|                             <span class="cat-art">|W|/,, |  (\`\\</span>           <span class="l3-bed-frame">+-------+</span>           |
+|                          <span class="cat-art">_.|o o |_   ) )</span>            (CAT TREE)          |
+|                          <span class="cat-art">-(((---(((--------</span>                             |
+|                                                                         |
++--------------------------------------------------------------------------------+`
+            }
+        };
 
-<!-- Added a small script to ensure the Inter font is used via link/import for better appearance -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+        const SEAFOOD_ART = {
+            creature: [
+                "    /¯¯¯¯\\",
+                "   ( #|\\_ü|",
+                "   ( #\\  ƒƒ",
+                "    \\ #\\",
+                "    /|||\\"
+            ],
+            shrimp: [
+                ".            ,",
+                "           .:/",
+                ".      ,,///;,   ,;/",
+                "  .    o:::::::;;///",
+                "     >::::::::;;\\\\\\",
+                "       ''\\\\\\\\\\'\" ';\\",
+                "          ';\\"
+            ],
+            fish: [
+                "  ;,//;,    ,;/",
+                " o:::::::;;///",
+                ">::::::::;;\\\\\\",
+                "  ''\\\\\\\\\\'\" ';\\"
+            ]
+        };
+        
+        const SCOOTER_ART = [
+            "   __o",
+            " _ \\<_",
+            "(_)/(_)"
+        ];
+
+        const PAW_ART = [
+            " . . . . ",
+            " O O O O ",
+            " OOOOOOO ",
+            "  OOOOO  "
+        ];
+        
+        const SPRAY_ART = [
+            " : . : : ",
+            " .:::::. ",
+            " ::...:: ",
+            " ::::::. "
+        ];
+
+        const BIOMES = {
+            1: {
+                name: "WET MARKET",
+                width: 84, 
+                height: 16, 
+                floorChars: ['~', ',', '.', '"'],
+                wallChar: '#',
+                enemyChar: 'M',
+                enemyName: "WALKING HUMAN",
+                desc: "Giants are shopping. Watch for the scooters!",
+                pattern: "puddles",
+                layout: "horizontal",
+                hazardType: 'paw'
+            },
+            2: {
+                name: "RESTAURANT KITCHEN",
+                width: 30, // Made square (was 40)
+                height: 30, // Made square (was 16)
+                floorChars: ['=', '+', '-', ' '],
+                wallChar: '[',
+                enemyChar: 'a', // Ant
+                enemyName: "SCOUT ANT",
+                desc: "A maze of counters. Avoid the Ants!",
+                pattern: "checkerboard",
+                layout: "cubes",
+                hazardType: 'spray'
+            },
+            3: {
+                name: "THE BEDROOM",
+                width: 30,
+                height: 16,
+                floorChars: ['(', ')', 'c', 'u'],
+                wallChar: 'I',
+                enemyChar: '☻',
+                enemyName: "YOU (THE SLEEPER)",
+                desc: "Quiet... don't wake the cat.",
+                pattern: "face",
+                layout: "open_square",
+                hazardType: 'paw' 
+            }
+        };
+
+        const FLAVOR_TEXT = {
+            food: ["Slurped a chunk!", "Strange texture.", "Seafood consumed."],
+            poison: "POISON! Wretched taste.",
+            glue: "Stuck in the muck.",
+            human_hit: "YOU TOUCHED THE GIANT! PAIN!",
+            cat_warn: "MEOW! A giant shadow looms...",
+            cat_hit: "SPLAT! The cat caught you.",
+            spray_warn: "HISSS! The air smells chemical...",
+            spray_hit: "CHOKING! Poison mist descends.",
+            scooter_warn: "HONK HONK! Motor engine revs...",
+            scooter_hit: "ROADKILL! The scooter ran you over.",
+            starve: "You starved to death.",
+            level_up: "Ascended."
+        };
+
+        class NeonScuttle {
+            constructor() {
+                this.gridEl = document.getElementById('grid-container');
+                this.viewportEl = document.getElementById('viewport'); 
+                this.logEl = document.getElementById('log-console');
+                this.gritEl = document.getElementById('grit-display');
+                this.levelEl = document.getElementById('level-display');
+                this.gameOverModal = document.getElementById('game-over-modal');
+                this.deathReasonEl = document.getElementById('death-reason');
+
+                this.level = 1;
+                this.grit = MAX_GRIT;
+                this.steps = 0; 
+                this.playerPos = { x: 1, y: 1 };
+                
+                this.map = []; 
+                this.visualMap = []; 
+                this.foodVisuals = []; 
+                this.enemies = []; 
+                this.scooters = [];
+                
+                // Hazard Variables
+                this.stompTimer = 0;
+                this.stompTarget = null;
+                this.hazardType = null;
+                
+                this.isGameOver = false;
+
+                this.mapW = 25;
+                this.mapH = 18;
+
+                this.startLevel();
+                this.bindInput();
+            }
+
+            log(msg, type = 'normal') {
+                const div = document.createElement('div');
+                div.textContent = `> ${msg}`;
+                div.className = `log-entry ${type}`;
+                this.logEl.prepend(div);
+                if (this.logEl.children.length > 20) this.logEl.lastChild.remove();
+            }
+
+            startLevel() {
+                this.grit = MAX_GRIT;
+                this.steps = 0;
+                this.stompTimer = 0;
+                this.stompTarget = null;
+                this.scooters = [];
+
+                const biomeIndex = ((this.level - 1) % 3) + 1;
+                this.biome = BIOMES[biomeIndex];
+                
+                // Update Decor for the current stage
+                this.updateDecorations(biomeIndex);
+                
+                this.mapW = this.biome.width;
+                this.mapH = this.biome.height;
+
+                this.gridEl.style.gridTemplateColumns = `repeat(${this.mapW}, 1fr)`;
+                this.gridEl.style.gridTemplateRows = `repeat(${this.mapH}, 1fr)`;
+                this.gridEl.style.width = 'fit-content';
+                this.gridEl.style.minWidth = `${this.mapW * 18}px`;
+                this.gridEl.style.minHeight = `${this.mapH * 18}px`;
+                
+                this.log(`ENTER: ${this.biome.name}`, 'new');
+                this.log(this.biome.desc);
+
+                this.generateLevel();
+                this.render();
+                
+                this.viewportEl.scrollLeft = 0;
+                this.viewportEl.scrollTop = 0;
+                this.updateCamera();
+            }
+
+            skipLevel() {
+                this.log("CHEAT: WARPING TO NEXT FLOOR...", 'new');
+                this.level++;
+                this.startLevel();
+            }
+
+            updateDecorations(biomeIndex) {
+                const streetContainer = document.getElementById('street-scene');
+                const marketContainer = document.getElementById('market-scene');
+                const streetMap = streetContainer.querySelector('.map');
+                const marketMap = marketContainer.querySelector('.map');
+
+                const art = STAGE_DECO[biomeIndex] || { top: '', bottom: '' };
+
+                if (art.top) {
+                    streetContainer.style.display = 'block';
+                    streetMap.innerHTML = art.top;
+                } else {
+                    streetContainer.style.display = 'none';
+                    streetMap.innerHTML = '';
+                }
+
+                if (art.bottom) {
+                    marketContainer.style.display = 'block';
+                    marketMap.innerHTML = art.bottom;
+                } else {
+                    marketContainer.style.display = 'none';
+                    marketMap.innerHTML = '';
+                }
+            }
+
+            updateCamera() {
+                const tileSize = window.innerWidth <= 768 ? 14 : 18;
+                
+                const playerPixelX = (this.playerPos.x * tileSize) + (tileSize / 2);
+                const playerPixelY = (this.playerPos.y * tileSize) + (tileSize / 2);
+                
+                const halfViewW = this.viewportEl.clientWidth / 2;
+                const halfViewH = this.viewportEl.clientHeight / 2;
+                
+                this.viewportEl.scrollLeft = playerPixelX - halfViewW;
+                this.viewportEl.scrollTop = playerPixelY - halfViewH;
+                
+                // --- PARALLAX SCROLL FOR SCENES ---
+                const maxGameScroll = this.gridEl.offsetWidth - this.viewportEl.clientWidth;
+                let scrollRatio = 0;
+                if (maxGameScroll > 0) {
+                    scrollRatio = this.viewportEl.scrollLeft / maxGameScroll;
+                }
+
+                // 1. Street Scene (Top)
+                const streetEl = document.querySelector('#street-scene .map');
+                const streetContainer = document.getElementById('street-scene');
+                if (streetEl && streetContainer) {
+                    const maxStreetScroll = streetEl.scrollWidth - streetContainer.clientWidth;
+                    if (maxStreetScroll > 0) {
+                        streetEl.style.transform = `translateX(-${scrollRatio * maxStreetScroll}px)`;
+                    } else {
+                        streetEl.style.transform = 'translateX(0px)';
+                    }
+                }
+
+                // 2. Market Scene (Bottom)
+                const marketEl = document.querySelector('#market-scene .map');
+                const marketContainer = document.getElementById('market-scene');
+                if (marketEl && marketContainer) {
+                    const maxMarketScroll = marketEl.scrollWidth - marketContainer.clientWidth;
+                    if (maxMarketScroll > 0) {
+                        marketEl.style.transform = `translateX(-${scrollRatio * maxMarketScroll}px)`;
+                    } else {
+                        marketEl.style.transform = 'translateX(0px)';
+                    }
+                }
+            }
+
+            generateLevel() {
+                this.map = [];
+                this.visualMap = [];
+                this.foodVisuals = [];
+                this.enemies = [];
+
+                this.generateProceduralLevel();
+            }
+
+            generateProceduralLevel() {
+                for (let y = 0; y < this.mapH; y++) {
+                    const row = [];
+                    const visRow = [];
+                    const foodRow = [];
+                    for (let x = 0; x < this.mapW; x++) {
+                        row.push('EMPTY');
+                        foodRow.push(null);
+                        
+                        let char = '.';
+                        if (this.biome.pattern === "puddles") {
+                            const noise = Math.sin(x * 0.2) + Math.cos(y * 0.5); 
+                            char = noise > 0.5 ? '~' : (noise > 0 ? ',' : '.');
+                        } 
+                        else if (this.biome.pattern === "checkerboard") {
+                            char = (x + y) % 2 === 0 ? '+' : ' ';
+                        } 
+                        else if (this.biome.pattern === "face") {
+                            char = Math.random() > 0.8 ? (Math.random() > 0.5 ? '(' : ')') : ' ';
+                        }
+
+                        visRow.push(char);
+                    }
+                    this.map.push(row);
+                    this.visualMap.push(visRow);
+                    this.foodVisuals.push(foodRow);
+                }
+
+                for (let i = 0; i < this.mapW; i++) { this.setTile(0, i, 'WALL'); this.setTile(this.mapH-1, i, 'WALL'); }
+                for (let i = 0; i < this.mapH; i++) { this.setTile(i, 0, 'WALL'); this.setTile(i, this.mapW-1, 'WALL'); }
+
+                if (this.biome.layout === "cubes") {
+                    for (let y = 2; y < this.mapH - 4; y += 5) {
+                        for (let x = 2; x < this.mapW - 4; x += 5) {
+                            if (Math.random() < 0.7) {
+                                this.drawRectWall(x, y, 3, 3, true); 
+                            }
+                        }
+                    }
+                } 
+                else if (this.biome.layout === "open_square") {
+                    this.generateFaceObstacles();
+                } else if (this.biome.layout === "horizontal") {
+                     for (let i = 0; i < (this.mapW * this.mapH) * 0.1; i++) this.setRandomTile('WALL');
+                }
+
+                const giantFoodCount = Math.floor((this.mapW * this.mapH) / 70);
+                const foodKeys = Object.keys(SEAFOOD_ART);
+                for(let i=0; i<giantFoodCount; i++) {
+                    const type = foodKeys[Math.floor(Math.random() * foodKeys.length)];
+                    this.placeGiantFood(type);
+                }
+
+                const area = this.mapW * this.mapH;
+                const crumbCount = Math.floor(area * 0.02);
+                for(let i=0; i<crumbCount; i++) this.setRandomTile('FOOD');
+
+                for(let i=0; i<Math.floor(area * 0.005); i++) this.setRandomTile('POISON');
+                for(let i=0; i<Math.floor(area * 0.01); i++) this.setRandomTile('GLUE');
+
+                const enemyCount = 3 + Math.floor(this.level / 2) + Math.floor(area * 0.005);
+                for(let i=0; i<enemyCount; i++) {
+                    const pos = this.findEmptyTile();
+                    if(pos) {
+                        this.enemies.push({ x: pos.x, y: pos.y, id: i });
+                    }
+                }
+
+                this.map[this.mapH-2][this.mapW-2] = 'EXIT';
+                
+                this.playerPos = { x: 1, y: 1 };
+                this.map[1][1] = 'EMPTY';
+                this.map[1][2] = 'EMPTY';
+                this.map[2][1] = 'EMPTY';
+            }
+
+            placeGiantFood(type) {
+                const art = SEAFOOD_ART[type];
+                const h = art.length;
+                const w = art[0].length;
+                
+                let placed = false;
+                let attempts = 0;
+                while(!placed && attempts < 50) {
+                    const tx = Math.floor(Math.random() * (this.mapW - w - 2)) + 1;
+                    const ty = Math.floor(Math.random() * (this.mapH - h - 2)) + 1;
+                    
+                    let clear = true;
+                    for(let i=0; i<h; i++) {
+                        for(let j=0; j<w; j++) {
+                            if (this.map[ty+i][tx+j] !== 'EMPTY') clear = false;
+                        }
+                    }
+
+                    if(clear) {
+                        for(let i=0; i<h; i++) {
+                            for(let j=0; j<w; j++) {
+                                const char = art[i][j];
+                                if (char !== ' ') {
+                                    this.map[ty+i][tx+j] = 'FOOD_CHUNK';
+                                    this.foodVisuals[ty+i][tx+j] = char;
+                                }
+                            }
+                        }
+                        placed = true;
+                    }
+                    attempts++;
+                }
+            }
+
+            generateFaceObstacles() {
+                const cx = Math.floor(this.mapW / 2);
+                const cy = Math.floor(this.mapH / 2);
+                this.drawRectWall(cx - 5, cy - 5, 3, 3, false); 
+                this.drawRectWall(cx + 3, cy - 5, 3, 3, false); 
+                for(let y=cy-2; y<cy+2; y++) this.setTile(y, cx, 'WALL');
+                for(let x=cx-3; x<cx+4; x++) this.setTile(cy+4, x, 'WALL');
+            }
+
+            drawRectWall(x, y, w, h, filled) {
+                for(let i=0; i<h; i++) {
+                    for(let j=0; j<w; j++) {
+                        if (filled || (i===0 || i===h-1 || j===0 || j===w-1)) {
+                            this.setTile(y+i, x+j, 'WALL');
+                        }
+                    }
+                }
+            }
+
+            setTile(y, x, type) {
+                if (y >= 0 && y < this.mapH && x >= 0 && x < this.mapW) {
+                    this.map[y][x] = type;
+                }
+            }
+
+            setRandomTile(type) {
+                const pos = this.findEmptyTile();
+                if (pos) this.map[pos.y][pos.x] = type;
+            }
+
+            findEmptyTile() {
+                let safety = 0;
+                while(safety < 2000) {
+                    const x = Math.floor(Math.random() * (this.mapW-2)) + 1;
+                    const y = Math.floor(Math.random() * (this.mapH-2)) + 1;
+                    if (this.map[y][x] === 'EMPTY' && !(x<4 && y<4)) { 
+                        return {x, y};
+                    }
+                    safety++;
+                }
+                return null;
+            }
+
+            handleInput(dx, dy) {
+                if (this.isGameOver) return;
+                
+                const newX = this.playerPos.x + dx;
+                const newY = this.playerPos.y + dy;
+                
+                if (newX < 0 || newX >= this.mapW || newY < 0 || newY >= this.mapH) return;
+
+                const targetType = this.map[newY][newX];
+
+                let moved = false;
+
+                if (targetType === 'WALL') {
+                    // Blocked
+                } else {
+                    if (targetType === 'GLUE') {
+                        if (Math.random() > 0.5) {
+                            this.log(FLAVOR_TEXT.glue);
+                            this.endTurn(true); 
+                            return;
+                        }
+                    }
+
+                    this.playerPos.x = newX;
+                    this.playerPos.y = newY;
+                    moved = true;
+
+                    if (targetType === 'FOOD') {
+                        this.grit = Math.min(MAX_GRIT, this.grit + 2); 
+                        this.map[newY][newX] = 'EMPTY';
+                        this.log(FLAVOR_TEXT.food[Math.floor(Math.random()*3)], 'info');
+                    } 
+                    else if (targetType === 'FOOD_CHUNK') {
+                        this.grit = Math.min(MAX_GRIT, this.grit + 2); 
+                        this.map[newY][newX] = 'EMPTY'; 
+                        this.log("Ate a piece of Giant Food.", 'info');
+                    }
+                    else if (targetType === 'POISON') {
+                        this.grit -= 4;
+                        this.map[newY][newX] = 'EMPTY';
+                        this.log(FLAVOR_TEXT.poison, 'danger');
+                    } else if (targetType === 'EXIT') {
+                        this.level++;
+                        this.log(FLAVOR_TEXT.level_up, 'new');
+                        this.startLevel();
+                        return;
+                    }
+                }
+
+                if (dx === 0 && dy === 0) moved = true;
+
+                if (moved) this.endTurn();
+            }
+
+            endTurn(struggled = false) {
+                this.steps++;
+                if (this.steps >= MOVES_PER_HUNGER) {
+                    this.grit -= 1;
+                    this.steps = 0;
+                }
+
+                this.updateEnemies();
+                
+                // HAZARD LOGIC
+                if (this.stompTimer > 0) {
+                    this.stompTimer--;
+                    if (this.stompTimer === 0) {
+                        this.triggerHazard();
+                    }
+                } else {
+                    if (Math.random() < 0.05) {
+                        this.startHazard();
+                    }
+                }
+                
+                this.updateScooters(); // Added call for Level 1 scooters
+
+                this.updateCamera();
+                this.checkDeath();
+                this.render();
+            }
+
+            startHazard() {
+                this.stompTimer = 2; // 2 turns warning
+                this.hazardType = this.biome.hazardType;
+                
+                const range = 5;
+                const px = this.playerPos.x;
+                const py = this.playerPos.y;
+                
+                const tx = Math.max(1, Math.min(this.mapW-6, px + (Math.floor(Math.random() * range * 2) - range)));
+                const ty = Math.max(1, Math.min(this.mapH-5, py + (Math.floor(Math.random() * range * 2) - range)));
+                
+                this.stompTarget = { x: tx, y: ty };
+                
+                if (this.hazardType === 'spray') {
+                    this.log(FLAVOR_TEXT.spray_warn, 'danger');
+                } else {
+                    this.log(FLAVOR_TEXT.cat_warn, 'danger');
+                }
+            }
+
+            triggerHazard() {
+                if (!this.stompTarget) return;
+                
+                const tx = this.stompTarget.x;
+                const ty = this.stompTarget.y;
+                
+                let w, h, art;
+                if (this.hazardType === 'spray') {
+                    w = SPRAY_ART[0].length;
+                    h = SPRAY_ART.length;
+                    art = SPRAY_ART;
+                } else {
+                    w = PAW_ART[0].length;
+                    h = PAW_ART.length;
+                    art = PAW_ART;
+                }
+                
+                if (this.playerPos.x >= tx && this.playerPos.x < tx + w &&
+                    this.playerPos.y >= ty && this.playerPos.y < ty + h) {
+                    
+                    this.grit -= 15;
+                    if (this.hazardType === 'spray') {
+                        this.log(FLAVOR_TEXT.spray_hit, 'danger');
+                    } else {
+                        this.log(FLAVOR_TEXT.cat_hit, 'danger');
+                    }
+                } else {
+                    this.log("The hazard missed.", 'normal');
+                }
+                
+                setTimeout(() => { 
+                    this.stompTarget = null; 
+                    this.render(); 
+                }, 600);
+            }
+            
+            // NEW: SCOOTER LOGIC
+            updateScooters() {
+                if (this.level !== 1) return;
+                
+                // Spawn logic: Increased chance (12% per turn)
+                if (Math.random() < 0.12) {
+                    this.log(FLAVOR_TEXT.scooter_warn, 'danger');
+                    
+                    // Randomize direction: Left->Right or Right->Left
+                    const spawnLeft = Math.random() > 0.5;
+                    const dir = spawnLeft ? 1 : -1;
+                    
+                    // Start off-screen
+                    const startX = spawnLeft ? -8 : this.mapW + 1;
+                    
+                    // Randomize Y position (needs 3 rows of height, mapH is 16)
+                    // Spawn between row 5 and 13 to be visible and varied
+                    const spawnY = Math.floor(Math.random() * 9) + 4; 
+
+                    this.scooters.push({ x: startX, y: spawnY, dir: dir, timer: 0 }); 
+                }
+                
+                // Update existing scooters
+                for (let i = this.scooters.length - 1; i >= 0; i--) {
+                    let s = this.scooters[i];
+                    s.x += 4 * s.dir; // Fast speed
+                    
+                    // Collision with player
+                    // Scooter size approx 7x3
+                    if (this.playerPos.x >= s.x && this.playerPos.x < s.x + 7 && 
+                        this.playerPos.y >= s.y && this.playerPos.y < s.y + 3) {
+                        this.grit -= 20;
+                        this.log(FLAVOR_TEXT.scooter_hit, 'danger');
+                        this.scooters.splice(i, 1); // Remove scooter after hit
+                        continue;
+                    }
+                    
+                    // Remove if off screen
+                    if (s.x > this.mapW + 10 || s.x < -10) {
+                        this.scooters.splice(i, 1);
+                    }
+                }
+            }
+
+            updateEnemies() {
+                this.enemies.forEach(enemy => {
+                    // HUMAN PATROL
+                    if (enemy.type === 'HUMAN') {
+                        const nx = enemy.x + enemy.dir;
+                        // Basic patrol bounds for Chef
+                        if (nx < enemy.startX - enemy.patrolRange || nx > enemy.startX + enemy.patrolRange || 
+                            nx <= 0 || nx >= this.mapW - 1) {
+                            enemy.dir *= -1; 
+                        } else {
+                            enemy.x = nx;
+                        }
+                        const px = this.playerPos.x;
+                        const py = this.playerPos.y;
+                        // Chef is tall (3 blocks high)
+                        if (px === enemy.x && (py === enemy.y || py === enemy.y + 1 || py === enemy.y + 2)) {
+                            this.grit -= 10;
+                            this.log(FLAVOR_TEXT.human_hit, 'danger');
+                        }
+                    } 
+                    // STANDARD ENEMY (ANTS)
+                    else {
+                        const dx = this.playerPos.x - enemy.x;
+                        const dy = this.playerPos.y - enemy.y;
+                        let moveX = 0;
+                        let moveY = 0;
+                        if (Math.abs(dx) > Math.abs(dy)) moveX = dx > 0 ? 1 : -1;
+                        else moveY = dy > 0 ? 1 : -1;
+                        
+                        if(Math.random() < 0.5) {
+                             const nx = enemy.x + moveX;
+                             const ny = enemy.y + moveY;
+                             if (nx > 0 && nx < this.mapW-1 && ny > 0 && ny < this.mapH-1 && this.map[ny][nx] !== 'WALL') {
+                                 enemy.x = nx;
+                                 enemy.y = ny;
+                             }
+                        }
+
+                        if (enemy.x === this.playerPos.x && enemy.y === this.playerPos.y) {
+                            this.grit -= 3;
+                            this.log(`ATTACKED by ${this.biome.enemyName}!`, 'danger');
+                        }
+                    }
+                });
+            }
+
+            checkDeath() {
+                if (this.grit <= 0) {
+                    this.isGameOver = true;
+                    this.deathReasonEl.textContent = "Vital Signs: ZERO.";
+                    this.gameOverModal.style.display = 'block';
+                }
+            }
+
+            retryLevel() {
+                this.isGameOver = false;
+                this.gameOverModal.style.display = 'none';
+                this.score = this.levelStartScore; 
+                this.log("TIMELINE RESET. TRY AGAIN.", 'info');
+                this.startLevel(); 
+            }
+
+            render() {
+                this.gridEl.innerHTML = '';
+
+                this.gritEl.textContent = `GRIT:${Math.ceil(this.grit)}`;
+                this.levelEl.textContent = `L:${this.level}`;
+                
+                if (this.grit < 5) this.gritEl.style.color = "var(--danger-red)";
+                else this.gritEl.style.color = "var(--safe-green)";
+
+                for (let y = 0; y < this.mapH; y++) {
+                    for (let x = 0; x < this.mapW; x++) {
+                        const tileDiv = document.createElement('div');
+                        tileDiv.className = 'tile';
+                        
+                        let char = this.visualMap[y][x];
+                        let className = 'floor';
+                        
+                        const type = this.map[y][x];
+                        
+                        if (x === this.playerPos.x && y === this.playerPos.y) {
+                            char = TILES.PLAYER;
+                            className = 'player';
+                        } else {
+                            const human = this.enemies.find(e => e.type === 'HUMAN' && e.x === x && (y >= e.y && y <= e.y + 2));
+                            
+                            if (human) {
+                                const offset = y - human.y;
+                                if (offset === 0) char = 'O';
+                                else if (offset === 1) char = '/|\\';
+                                else if (offset === 2) char = '/ \\';
+                                className = 'human';
+                            }
+                            else {
+                                const enemyHere = this.enemies.find(e => e.x === x && e.y === y && !e.type); 
+                                if (enemyHere) {
+                                    char = this.biome.enemyChar;
+                                    className = 'enemy';
+                                } else if (type === 'WALL') {
+                                    char = this.biome.wallChar; 
+                                    if(this.biome.pattern === "custom") char = this.visualMap[y][x];
+                                    className = 'wall';
+                                } else if (type === 'FOOD') {
+                                    char = TILES.FOOD;
+                                    className = 'food crumb';
+                                } else if (type === 'FOOD_CHUNK') {
+                                    char = this.foodVisuals[y][x];
+                                    className = 'food';
+                                } else if (type === 'POISON') {
+                                    char = TILES.POISON;
+                                    className = 'poison';
+                                } else if (type === 'GLUE') {
+                                    char = TILES.GLUE;
+                                    className = 'glue';
+                                } else if (type === 'EXIT') {
+                                    char = TILES.EXIT;
+                                    className = 'exit';
+                                }
+                            }
+                        }
+
+                        // RENDER HAZARD (Spray or Paw)
+                        if (this.stompTarget) {
+                            const hx = this.stompTarget.x;
+                            const hy = this.stompTarget.y;
+                            let w, h, art;
+                            
+                            if (this.hazardType === 'spray') {
+                                w = SPRAY_ART[0].length;
+                                h = SPRAY_ART.length;
+                                art = SPRAY_ART;
+                            } else {
+                                w = PAW_ART[0].length;
+                                h = PAW_ART.length;
+                                art = PAW_ART;
+                            }
+                            
+                            // Warning Phase
+                            if (x >= hx && x < hx + w && y >= hy && y < hy + h) {
+                                if (this.stompTimer > 0) {
+                                    // Shadow/Warning
+                                    tileDiv.classList.add('warning');
+                                } else {
+                                    // IMPACT PHASE - Draw Art
+                                    const artChar = art[y - hy][x - hx];
+                                    if (artChar !== ' ') {
+                                        char = artChar;
+                                        if (this.hazardType === 'spray') {
+                                            className = 'spray-impact';
+                                        } else {
+                                            className = 'impact';
+                                        }
+                                        tileDiv.textContent = char;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // RENDER SCOOTER (Level 1)
+                        if (this.level === 1) {
+                            this.scooters.forEach(s => {
+                                // Simple bounding box check for rendering art
+                                const sx = s.x;
+                                const sy = s.y;
+                                if (x >= sx && x < sx + 7 && y >= sy && y < sy + 3) {
+                                    const r = y - sy;
+                                    const c = x - sx;
+                                    // Use safe access to ASCII art
+                                    if (SCOOTER_ART[r] && SCOOTER_ART[r][c] && SCOOTER_ART[r][c] !== ' ') {
+                                        char = SCOOTER_ART[r][c];
+                                        className = 'scooter';
+                                        tileDiv.textContent = char;
+                                    }
+                                }
+                            });
+                        }
+                        
+                        if(tileDiv.textContent !== char) tileDiv.textContent = char;
+                        
+                        className.split(' ').forEach(cls => tileDiv.classList.add(cls));
+
+                        this.gridEl.appendChild(tileDiv);
+                    }
+                }
+            }
+
+            bindInput() {
+                document.addEventListener('keydown', (e) => {
+                    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+                        e.preventDefault();
+                    }
+                    
+                    switch(e.key) {
+                        case 'ArrowUp': case 'w': this.handleInput(0, -1); break;
+                        case 'ArrowDown': case 's': this.handleInput(0, 1); break;
+                        case 'ArrowLeft': case 'a': this.handleInput(-1, 0); break;
+                        case 'ArrowRight': case 'd': this.handleInput(1, 0); break;
+                        case 'Enter': case ' ': this.handleInput(0, 0); break;
+                    }
+                });
+
+                document.getElementById('btn-up').onclick = () => this.handleInput(0, -1);
+                document.getElementById('btn-down').onclick = () => this.handleInput(0, 1);
+                document.getElementById('btn-left').onclick = () => this.handleInput(-1, 0);
+                document.getElementById('btn-right').onclick = () => this.handleInput(1, 0);
+                document.getElementById('btn-wait').onclick = () => this.handleInput(0, 0);
+                document.getElementById('btn-skip').onclick = () => this.skipLevel();
+            }
+        }
+
+        const game = new NeonScuttle();
+    </script>
 </body>
 </html>

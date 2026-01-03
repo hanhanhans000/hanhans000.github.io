@@ -1,31 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Level 2: The Spacious Kitchen</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Level 2: The Spacious Kitchen</title>
 <style>
     body {
-        background-color: #111;
-        color: #ccc; /* Default to wall color roughly */
+        background-color: #080808;
+        color: #ccc;
         font-family: 'Courier New', Courier, monospace;
-        font-size: 14px;
-        line-height: 14px;
+        margin: 0;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         height: 100vh;
-        margin: 0;
-        overflow: hidden;
+        width: 100vw;
+        touch-action: none; /* Prevent browser zooming/scrolling */
+    }
+
+    #game-wrapper {
+        position: relative;
+        transform-origin: top center;
+        transition: transform 0.2s;
     }
 
     #game-container {
         position: relative;
-        border: 2px solid #333;
+        border: 4px solid #333;
         padding: 10px;
-        background: #050505;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        background: #111;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        width: fit-content;
     }
 
     pre {
@@ -34,28 +41,37 @@
         cursor: default;
         user-select: none;
         white-space: pre;
+        font-size: 14px;
+        line-height: 14px;
     }
 
     #ui-layer {
-        margin-bottom: 10px;
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
-        max-width: 900px;
+        background: #000;
+        border-bottom: 2px solid #444;
         display: flex;
-        justify-content: space-between;
-        font-size: 18px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 5px;
-        color: #888;
+        justify-content: space-around;
+        padding: 10px 0;
+        z-index: 100;
+        font-size: 16px;
+        font-weight: bold;
+        box-sizing: border-box;
     }
 
+    .stat-box { color: #888; }
     .stat-box span { color: #fff; }
-    .stat-box.danger span { color: #ff4400; }
-    .stat-box.safe span { color: #4af; }
+    .stat-box.danger span { color: #ff3300; animation: blink 0.5s infinite; }
+    .stat-box.safe span { color: #00ccff; }
     
-    /* --- ANIMATIONS & GAME ASSETS --- */
-    
+    @keyframes blink { 50% { opacity: 0.5; } }
+
+    /* --- ANIMATIONS & ASSETS --- */
+
     .fire { display: inline-block; font-weight: bold; }
-    .fire::after { content: "[  ▲▲  ]"; animation: fireAnim 0.4s infinite steps(1); }
+    .fire::after { content: "  ▲▲  "; animation: fireAnim 0.4s infinite steps(1); }
     @keyframes fireAnim {
         0%   { content: "[  ▲▲  ]"; color: #ff8800; text-shadow: 0 0 5px #ff4400; }
         33%  { content: "[ ▲▲▲▲ ]"; color: #ff4400; text-shadow: 0 0 8px #ff0000; }
@@ -76,32 +92,26 @@
         100% { content: "[███████]"; color: #ff0000; text-shadow: 0 0 10px #aa0000; }
     }
 
-    /* Prep Station Animations */
-    .chop { display: inline-block; color: #ccc; }
-    .chop { animation: chopAnim 0.15s infinite alternate; }
+    .chop { display: inline-block; color: #ccc; animation: chopAnim 0.15s infinite alternate; }
     @keyframes chopAnim {
         0% { transform: translateY(0); }
-        100% { transform: translateY(-3px); }
+        100% { transform: translateY(-2px); }
     }
 
-    .sauce-anim { display: inline-block; color: #f44; font-weight: bold; }
-    .sauce-anim { animation: sauceAnim 1.5s infinite; }
+    .sauce-anim { display: inline-block; font-weight: bold; animation: sauceAnim 1.5s infinite; }
     @keyframes sauceAnim {
         0% { color: #800; text-shadow: none; }
         50% { color: #f00; text-shadow: 0 0 8px red; }
         100% { color: #800; text-shadow: none; }
     }
 
-    /* Smoke Animation */
-    .smoke-anim { display: inline-block; color: #888; }
-    .smoke-anim { animation: smokeFloat 2s infinite linear; }
+    .smoke-anim { display: inline-block; color: #888; animation: smokeFloat 2.5s infinite linear; }
     @keyframes smokeFloat {
-        0% { opacity: 0.3; transform: translateY(0); text-shadow: 0 0 0 #fff; }
-        50% { opacity: 0.8; transform: translateY(-2px); text-shadow: 0 -2px 4px #fff; }
-        100% { opacity: 0.3; transform: translateY(-4px); text-shadow: 0 -4px 8px #fff; }
+        0% { opacity: 0.2; transform: translateY(0); text-shadow: 0 0 0 #fff; }
+        50% { opacity: 0.6; transform: translateY(-2px); text-shadow: 0 -2px 4px #fff; }
+        100% { opacity: 0.0; transform: translateY(-5px); text-shadow: 0 -4px 8px #fff; }
     }
 
-    /* Water Leak & Drain Animation */
     .water-leak { display: inline-block; width: 15ch; color: #4af; font-weight: bold; vertical-align: top; }
     .water-leak::after { content: "( ~~~ ~~~ ~~~ )"; animation: waterFlow 1.0s infinite steps(1); }
     @keyframes waterFlow {
@@ -111,88 +121,99 @@
         75%  { content: "(~~  ~~  ~~  ~)"; color: #4ee; text-shadow: 0 0 5px #0ff; }
     }
 
-    .drain-pipe { display: inline-block; color: #4af; font-weight: bold; text-shadow: 0 0 5px blue; }
-    .drain-pipe { animation: pipeFlow 1.5s infinite linear; }
+    .drain-pipe { display: inline-block; color: #4af; font-weight: bold; text-shadow: 0 0 5px blue; animation: pipeFlow 1.5s infinite linear; }
     @keyframes pipeFlow {
         0% { opacity: 0.4; color: #4af; }
         50% { opacity: 1; color: #aff; text-shadow: 0 0 8px cyan; }
         100% { opacity: 0.4; color: #4af; }
     }
 
-    .wall    { color: #666; }
+    /* Colors */
+    .wall    { color: #444; }
+    .floor   { color: #222; }
     .metal   { color: #889; }
     .food    { color: #dd8; }
     .veg     { color: #4f4; }
     .meat    { color: #f44; }
     .water   { color: #4af; }
-    .roach   { color: #d94; font-weight: bold; }
     .zone    { color: #888; font-style: italic; }
-    .npc     { color: #fff; font-weight: bold; }
-    .tile    { color: #333; }
+    .npc     { color: #fff; font-weight: bold; background: #333; }
     .bottle  { color: #ff0; text-shadow: 0 0 3px #ff8800; font-weight: bold; }
     .hook    { color: #555; }
+    .void    { color: #000; background-color: #000; }
     
-    /* Dynamic Entities */
-    .player  { color: #fff; background-color: #33ff33; font-weight: 900; z-index: 10; position: relative; }
-    .enemy   { color: #f00; font-weight: 900; text-shadow: 0 0 5px red; }
+    /* Entities */
+    .player  { color: #0f0; background-color: #003300; font-weight: 900; box-shadow: 0 0 5px #0f0; }
 
 </style>
 </head>
 <body>
 
 <div id="ui-layer">
-    <div class="stat-box">LEVEL: <span id="lvl-display">2 - KITCHEN</span></div>
+    <div class="stat-box">LEVEL: <span id="lvl-display">2</span></div>
     <div class="stat-box">GRIT: <span id="grit-display">40</span></div>
     <div class="stat-box">STATUS: <span id="status-display">SNEAKING</span></div>
 </div>
 
-<div id="game-container">
-    <pre id="game-stage"></pre>
+<div id="game-wrapper">
+    <div id="game-container">
+        <pre id="game-stage"></pre>
+    </div>
 </div>
 
 <script>
 // --- CONFIGURATION ---
-const TICK_RATE = 200; 
+const TICK_RATE = 150; 
 const MOVE_COST_RATE = 3; 
 const START_GRIT = 40;
 
-// --- THE MAP ---
+// Note: Double backslashes \\ are needed for JS strings
 const rawMap = [
 "                          ||                                                                       ",
 "                          ||                                                                       ",
 "+-------------------------||-----------------------------------------------------------------------+",
 "|    (WALK-IN FRIDGE)     ||                        (DRY STORAGE WAREHOUSE)                        |",
 "|    +----------------+   ||   +---------------------------------------------------------------+   |",
-"|    |  ?   ?   ?     |   ||   |                                                               |   |",
-"|    |  |   |   |     |   ||   |                          )_(        _[_]_                         |   |",
-"|    | (S) (S) (S)    |   ||   |                         .'-'.      /_:_\\                          |   |",
-"|    | (S) (S) (S)    |   ||   |   /-\\         /-\\       |:::|      )_:_(       {:}       {:}      |   |",
-"|    |  U   U   U     |   ||   |  ( R )       ( F )      |:::|      |:._|       {S}       {M}      |   |",
-"|    | [|^^|]  [(@)]  |   ||   |   \\_/         \\_/       '-.-'      `-.-'       {_}       {_}      |   |",
-"|    | [====]  [===]  |   ||   |  [====]     [=====]     [===]     [===]     [=====]     [===]   |",
+"|    |  ?   ?   ?     |   ||   |                           mmm        mmm          mmm         |   |",
+"|    |  |   |   |     |   ||   |    __         __         )-(        )-(          )-(          |   |",
+"|    | (S) (S) (S)    |   ||   |   (  )       (  )       (   )      (   )        (   )         |   |",
+"|    | (S) (S) (S)    |   ||   |   (__)       (__)       |   |      |   |        |   |         |   |",
+"|    |  U   U   U     |   ||   |   (  )       (  )       |   |      |   |        |   |         |   |",
+"|    | [|^^|]  [(@)]  |   ||   |   (__)       (__)       |___|      |___|        |___|         |   |",
+"|    | [====]  [===]  |   ||   |   (____)     (____)     [|X|]      [|/|]      (oooo)      |   |",
 "|    |                |   ||   |===============================================================|   |",
-"|    |      _   ____  |   ||   |                           mmm        mmm          mmm             |   |",
-"|    |     (_) (____) |   ||   |    __          __         )-(        )-(          )-(             |   |",
-"|    |     (_)  |@@|  |   ||   |   (  )        (  )       (   )      (   )        (   )            |   |",
-"|    |     (_)  \\__/  |   ||   |   (__)        (__)       |   |      |   |        |   |            |   |",
-"|    |      _    U    |   ||   |   (  )        (  )       |   |      |   |        |   |            |   |",
-"|    | [~@@~]  [<>< ] |   ||   |   (__)        (__)       |___|      |___|        |___|            |   |",
-"|    | [====]  [====] |   ||   |   (____)      (____)      [|X|]      [|/|]      (oooo)        |   |",
+"|    |      _   ____  |   ||   |                                                               |   |",
+"|    |     (_) (____) |   ||   |                        )_(        _[_]_                       |   |",
+"|    |     (_)  |@@|  |   ||   |                       .'-'.      /_:_\\                        |   |",
+"|    |     (_)  \\__/  |   ||   |   /-\\         /-\\      |:::|      )_:_(       {:}       {:}    |   |",
+"|    |      _    U    |   ||   |  ( R )       ( F )     |:::|      |:._|       {S}       {M}    |   |",
+"|    | [~@@~]  [<>< ] |   ||   |   \\_/         \\_/      '-.-'      `-.-'       {_}       {_}    |   |",
+"|    | [====]  [====] |   ||   |  [====]     [=====]    [===]     [===]     [=====]     [===]  |",
 "|    +-------(0)------+   ||   +---------------------------------------------------------------+   |",
 "|    +-----+-----+-----+  ||   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+       |",
 "|    |     |     |     |  ||   |     |     |     |     |     |     |     |     |     |     |       |",
 "|    +-----+-----+-----+  ||   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+       |",
 "|   +---------------------++-------------------------------------------------------------------+   |",
-"|   |  THE HOT LINE (COOKING STATION)                                                          |   |",
+"|   |  THE HOT LINE (LEFT WING)                           THE HOT LINE (RIGHT WING)            |   |",
 "|   |                                                                                          |   |",
-"|   |   (WOK STATION 1)          (WOK STATION 2)           (STOVE TOP)            (OVENS)      |   |",
-"|   |                                                                                          |   |",
-"|   |       (  )                     (  )                   (  ) (  )             [~~~~~]      |   |",
-"|   |        )(                       )(                     )(   )(              [~~~~~]      |   |",
-"|   |       (__)                     (__)                   (__) (__)             [__o__]      |   |",
-"|   |      /    \\                   /    \\                 /    \\ /    \\            |     |      |   |",
-"|   |     |______|                 |______|               |_____|_____|            |_____|      |   |",
-"|   |     [==FIRE]                 [==FIRE]               [====GAS====]            [HOT!!]      |   |",
+"|   |   (WOK STATION 1)             ###################            (STOVE TOP)                 |   |",
+"|   |                               #                 #                                        |   |",
+"|   |       (  )                    #                 #             (  ) (  )                  |   |",
+"|   |        )(                     #      THE        #              )(   )(                   |   |",
+"|   |       (__)                    #      VOID       #             (__) (__)                  |   |",
+"|   |      /    \\                   #                 #            /    \\ /    \\               |   |",
+"|   |     |______|                  #                 #           |_____|_____|                |   |",
+"|   |     [==FIRE]                  #                 #           [====GAS====]                |   |",
+"|   |                               #                 #                                        |   |",
+"|   |                               #                 #                                        |   |",
+"|   |   (WOK STATION 2)             #                 #             (OVENS)                    |   |",
+"|   |                               #                 #                                        |   |",
+"|   |       (  )                    #                 #             [~~~~~]                    |   |",
+"|   |        )(                     #                 #             [~~~~~]                    |   |",
+"|   |       (__)                    #                 #             [__o__]                    |   |",
+"|   |      /    \\                   #                 #              |     |                   |   |",
+"|   |     |______|                  #                 #              |_____|                   |   |",
+"|   |     [==FIRE]                  ###################              [HOT!!]                   |   |",
 "|   |                                                                                          |   |",
 "|   +------------------------------------------------------------------------------------------+   |",
 "|          (WIDE CHEF'S ALLEY - DANGER ZONE)                                                       |",
@@ -212,8 +233,8 @@ const rawMap = [
 "|   |   |___________}     |___________}     |___________} |   |     [ SINK ]       [PLATES ]    |   |",
 "|   |    (Chopping)        (Plating)         (Saucing)    |   |     [______]       [|||||||]    |   |",
 "|   |      _||_              (    )             _||_      |   |        |                         |   |",
-"|   |     ( vvv)            (      )           ( @@@)     |   |        | ( ~~~ ~~~ ~~~ )         |   |",
-"|   |     (Veg )            (Plate)            (Meat)     |   |        |                         |   |",
+"|   |      ( vvv)           (      )           ( @@@)     |   |        | ( ~~~ ~~~ ~~~ )         |   |",
+"|   |      (Veg )           (Plate)            (Meat)     |   |        |                         |   |",
 "|   +-----------------------------------------------------+   +-------|------------------------+   |",
 "|                                                                     |                            |",
 "|    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+-----+-----+-----+-----+    |",
@@ -225,30 +246,60 @@ const rawMap = [
 
 // --- GAME STATE ---
 let grid = [];
-let player = { x: 7, y: 42, char: '@', steps: 0, grit: START_GRIT };
-let enemies = []; 
+let player = { x: 7, y: 52, char: '@', steps: 0, grit: START_GRIT }; // Shifted start Y down
 let gameOver = false;
+let tickCount = 0;
 
 // --- INITIALIZATION ---
 function init() {
+    // Parse map to 2D array
     grid = rawMap.map(row => row.split(''));
-    document.addEventListener('keydown', handleInput);
     
-    // Touch Controls
-    let touchStartX = 0; let touchStartY = 0;
-    document.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-    }, {passive: false});
-    document.addEventListener('touchend', e => {
-        const diffX = e.changedTouches[0].screenX - touchStartX;
-        const diffY = e.changedTouches[0].screenY - touchStartY;
-        if (Math.abs(diffX) > Math.abs(diffY)) movePlayer(diffX > 0 ? 1 : -1, 0);
-        else movePlayer(0, diffY > 0 ? 1 : -1);
-    }, {passive: false});
-
+    // Controls
+    document.addEventListener('keydown', handleInput);
+    setupTouchControls();
+    window.addEventListener('resize', fitScreen);
+    
+    // Start
+    fitScreen();
     setInterval(gameLoop, TICK_RATE);
     render();
+}
+
+function fitScreen() {
+    const wrapper = document.getElementById('game-wrapper');
+    const container = document.getElementById('game-container');
+    const width = container.offsetWidth;
+    const height = container.offsetHeight;
+    
+    // Add extra padding calculation
+    const scaleX = (window.innerWidth - 20) / width;
+    const scaleY = (window.innerHeight - 80) / height;
+    const scale = Math.min(scaleX, scaleY, 1.3); // Max scale 1.3 for desktop
+    
+    wrapper.style.transform = `scale(${scale})`;
+    wrapper.style.marginTop = `${(window.innerHeight - (height * scale)) / 2}px`;
+}
+
+function setupTouchControls() {
+    let tsX = 0, tsY = 0;
+    document.addEventListener('touchstart', e => {
+        tsx = e.changedTouches[0].screenX;
+        tsY = e.changedTouches[0].screenY;
+    }, {passive: false});
+    
+    document.addEventListener('touchend', e => {
+        const teX = e.changedTouches[0].screenX;
+        const teY = e.changedTouches[0].screenY;
+        const dx = teX - tsX;
+        const dy = teY - tsY;
+        
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (Math.abs(dx) > 30) movePlayer(dx > 0 ? 1 : -1, 0);
+        } else {
+            if (Math.abs(dy) > 30) movePlayer(0, dy > 0 ? 1 : -1);
+        }
+    }, {passive: false});
 }
 
 // --- CORE MECHANICS ---
@@ -267,80 +318,87 @@ function handleInput(e) {
 }
 
 function movePlayer(dx, dy) {
+    if (gameOver) return;
+    
     const newX = player.x + dx;
     const newY = player.y + dy;
     const tile = getTile(newX, newY);
     
-    const solidChars = ['|', '+', '=', '[', ']', '{', '}', ')', '(', '/', '\\', '_', '.', ':', ';', '~', '-', 'p', 'q', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', "'", 'm', '?', '@'];
-    const passable = [' ', 'v', 'o', 'x', 'v'];
+    // Collision Logic
+    let isSolid = false;
+    const solidChars = ['|', '+', '=', '[', ']', '{', '}', ')', '(', '/', '\\', '_', '.', ':', ';', '~', '-', 'p', 'q', "'", '?', '#'];
     
-    let isSolid = solidChars.includes(tile);
+    if (solidChars.includes(tile)) isSolid = true;
     
-    // ZONES
-    // 1. Middle Alley Tiled Floor
-    if (newY >= 40 && newY <= 48) {
-        if (newX > 4 && newX < 85) {
-             if (tile === '+' || tile === '|' || tile === '-') isSolid = false;
-        }
-    }
+    // Override Solid Zones (Walkable Floors)
+    // 1. Chef's Alley (Center - Shifted Down)
+    if (newY >= 48 && newY <= 59 && newX >= 5 && newX <= 88) isSolid = false;
+    
+    // 2. Fridge Entrance
+    if (newY >= 21 && newY <= 24 && newX >= 5 && newX <= 30) isSolid = false;
+    
+    // 3. Dry Storage Entrance
+    if (newY >= 21 && newY <= 24 && newX >= 35 && newX <= 90) isSolid = false;
+    
+    // 4. Bottom Area (Shifted Down)
+    if (newY >= 60 && newY <= 67 && newX >= 5 && newX <= 92) isSolid = false;
 
-    // 2. Bottom Tiled Floor Area
-    if (newY >= 52 && newY <= 56) {
-        if (newX > 4 && newX < 90) { 
-            if (tile === '+' || tile === '|' || tile === '-') isSolid = false;
-        }
-    }
+    // Hard blocker for map edges and Void
+    if (tile === '#' || tile === ' ') isSolid = true; 
 
-    // 3. Fridge Entrance Tiles
-    if (newY >= 22 && newY <= 24) {
-        // Fridge (Left)
-        if (newX > 4 && newX < 26) {
-             if (tile === '+' || tile === '|' || tile === '-') isSolid = false;
-        }
-        // Dry Storage Entrance (Right)
-        if (newX > 35 && newX < 90) {
-             if (tile === '+' || tile === '|' || tile === '-') isSolid = false;
-        }
-    }
-    
-    if (tile === 'v' || tile === 'o') isSolid = false;
-    
-    if (isSolid && !passable.includes(tile)) return;
-    if (tile === '#') return;
+    // Specific object blockers inside walkable zones
+    if (tile === 'X' || tile === 'S' || tile === 'M') isSolid = true; // Crates/Sacks
 
+    if (isSolid) return;
+
+    // Hazard Check
     if (checkHazard(newX, newY)) {
-        player.grit -= 10;
-        updateStatus("OUCH! HEAT!", "danger");
+        player.grit -= 5;
+        updateStatus("OUCH! IT'S HOT!", "danger");
+    } else {
+        updateStatus("SNEAKING...", "safe");
     }
 
     player.x = newX;
     player.y = newY;
     player.steps++;
+    
+    // Grit decay on movement
     if (player.steps % MOVE_COST_RATE === 0) player.grit--;
 
-    if (newY >= 58 && newX >= 70) {
+    // Win Condition (Bottom Right Exit)
+    if (newY >= 68 && newX >= 70) {
         gameOver = true;
-        updateStatus("LEVEL COMPLETE! YOU ESCAPED!", "safe");
-        document.getElementById('game-container').style.borderColor = "gold";
+        updateStatus("ESCAPED! LEVEL COMPLETE!", "safe");
+        document.getElementById('game-container').style.borderColor = "#00ccff";
+        document.body.style.backgroundColor = "#001122";
     }
 
     render();
 }
 
 function checkHazard(x, y) {
-    if (y >= 33 && y <= 35 && x < 80) return true; 
+    // Fire/Heat Zones (Split vertical)
+    const isRowHazard = (y >= 32 && y <= 34) || (y >= 42 && y <= 44);
+    const isColHazard = (x < 35 || x > 60);
+
+    if (isRowHazard && isColHazard) return true; 
     return false;
 }
 
 function gameLoop() {
     if (gameOver) return;
+    tickCount++;
+    
     if (player.grit <= 0) {
         player.grit = 0;
         gameOver = true;
-        updateStatus("THE DREAM ENDS (STARVED)", "danger");
+        updateStatus("EXHAUSTED. CAUGHT.", "danger");
+        document.getElementById('game-container').style.borderColor = "#ff3300";
     }
-
-    render();
+    
+    // Periodic UI updates or idle animations could go here
+    if (tickCount % 5 === 0) render(); // Re-render for animations even if not moving
 }
 
 function getTile(x, y) {
@@ -353,147 +411,101 @@ function updateStatus(msg, type) {
     const box = el.parentElement;
     el.innerText = msg;
     box.className = "stat-box " + (type || "");
-    
-    if (type === "danger") {
-        document.body.style.backgroundColor = "#220000";
-        setTimeout(() => document.body.style.backgroundColor = "#111", 200);
-    }
+    document.getElementById('grit-display').innerText = player.grit;
 }
 
-// --- VISUAL ENGINE ---
+// --- RENDER ENGINE ---
 function render() {
-    const displayGrid = JSON.parse(JSON.stringify(grid)); 
-    
-    // Draw Player
-    if (displayGrid[player.y] && displayGrid[player.y][player.x]) {
-        displayGrid[player.y][player.x] = `<span class="player">@</span>`;
-    }
-    
-    // Inject Drain Pipe Animation
-    for(let i=46; i<=57; i++) {
-        try {
-            if (displayGrid[i][70] === '|') {
-                displayGrid[i][70] = `<span class="drain-pipe">|</span>`;
-            }
-        } catch(err) {}
-    }
-    
-    // --- COLORING SCANNERS ---
+    // 1. Create a clean copy for display
+    const dGrid = grid.map(row => [...row]); 
 
-    // 1. Dry Storage Shelf 1 (Top) - Sacks & Bottles
-    // Rows 5-11
-    for(let y=5; y<=11; y++) {
-        for(let x=43; x<=89; x++) { // Wide scan for top shelf
-            if (!displayGrid[y] || !displayGrid[y][x]) continue;
-            const char = displayGrid[y][x];
+    // 2. Pre-process Static Coloring (Walls, Floors, Scanners)
+    // We do this loop FIRST so we don't break HTML tags generated later
+    for (let y = 0; y < dGrid.length; y++) {
+        for (let x = 0; x < dGrid[y].length; x++) {
+            let char = dGrid[y][x];
             
-            // Sacks (Rice/Flour) - Beige
-            if (['/', '\\', '(', ')', 'R', 'F', '_', '-'].includes(char) && x < 63) {
-                 displayGrid[y][x] = `<span class="food">${char}</span>`;
+            // Skip processing if it's empty space
+            if (char === ' ') continue;
+
+            let colorClass = '';
+
+            // Zone Scanners (Fridge & Storage)
+            if (y >= 5 && y <= 19) {
+                // Fridge Contents
+                if (x >= 6 && x <= 22) {
+                    if (['S','U','@','/','\\'].includes(char)) colorClass = 'meat';
+                    else if (['?','|'].includes(char) && y < 8) colorClass = 'hook';
+                    else if (['[',']','=','~'].includes(char)) colorClass = 'food';
+                }
+                // Dry Storage
+                if (x >= 40 && x < 90) {
+                    // Added 'm' and 'o' to lists to ensure proper coloring after swap
+                    if (['R','F','/','\\','(',')','o'].includes(char)) colorClass = 'food';
+                    else if (['.',':','|',"'",'m'].includes(char)) colorClass = 'bottle'; 
+                    else if (['{','}','S','M'].includes(char)) colorClass = 'veg';
+                    else if (['[',']','=','_'].includes(char)) colorClass = 'metal';
+                }
             }
-            // Bottles (Item 1 & 2) - Yellow
-            else if (['.', '-', ':', '|', "'", '_', ')', '(', '/'].includes(char) && x >= 63 && x < 81) {
-                 displayGrid[y][x] = `<span class="bottle">${char}</span>`;
+
+            // General Wall/Structure Coloring
+            // We only color these if they haven't been colored by a scanner yet
+            if (!colorClass) {
+                if (char === '+' || char === '|' || char === '-') colorClass = 'wall';
+                else if (char === '.') colorClass = 'floor';
+                else if (char === '#') colorClass = 'void'; // The Void
             }
-            // Spices - Green/Red
-            else if (['{', '}', ':', 'S', 'M', '_'].includes(char) && x >= 81) {
-                 displayGrid[y][x] = `<span class="veg">${char}</span>`;
+
+            if (colorClass) {
+                dGrid[y][x] = `<span class="${colorClass}">${char}</span>`;
             }
         }
     }
 
-    // 2. Dry Storage Shelf 2 (Bottom) - Cans, Boxes, Jars
-    // Rows 13-19 (Scans from y=13 to cover jar tops)
-    for(let y=13; y<=19; y++) {
-        for(let x=43; x<=92; x++) {
-            if (!displayGrid[y] || !displayGrid[y][x]) continue;
-            const char = displayGrid[y][x];
-            
-            // Cans - Metal/Blue
-            if (['(', ')', '_'].includes(char) && x < 62) {
-                 displayGrid[y][x] = `<span class="metal">${char}</span>`;
-            }
-            // Bottles/Jars (Item 3, 4, 5) - Yellow
-            else if (x >= 62) {
-                 displayGrid[y][x] = `<span class="bottle">${char}</span>`;
-            }
-        }
-    }
-
-    // 3. Fridge Contents (Meat/Cheese)
-    for(let y=5; y<=18; y++) {
-        for(let x=6; x<=21; x++) {
-            if (!displayGrid[y] || !displayGrid[y][x]) continue;
-            const char = displayGrid[y][x];
-            
-            // Meat Patterns
-            if (['S', 'U', '@', '/', '\\'].includes(char) || (char === '|' && y > 6 && y < 16)) {
-               displayGrid[y][x] = `<span class="meat">${char}</span>`;
-            }
-            // Hooks
-            if (['?', '|'].includes(char) && y <= 6) {
-               displayGrid[y][x] = `<span class="hook">${char}</span>`;
-            }
-            // Cheese/Food
-            if (['_', '(', ')'].includes(char) && y > 12) {
-               displayGrid[y][x] = `<span class="food">${char}</span>`; 
-            }
-        }
-    }
-
-    let output = displayGrid.map(row => row.join('')).join('\n');
-
-    // --- SYNTAX HIGHLIGHTING & ANIMATION INJECTION ---
+    // 3. Inject Entities (Player)
+    // We do this before string joining so the player is strictly at coordinate x,y
+    dGrid[player.y][player.x] = `<span class="player">@</span>`;
     
+    // Inject Dynamic Drain Pipe (Bottom Right)
+    for(let i=60; i<=67; i++) {
+        if(dGrid[i][70] && dGrid[i][70].includes('|')) {
+            dGrid[i][70] = `<span class="drain-pipe">|</span>`;
+        }
+    }
+
+    // 4. Flatten to String
+    let output = dGrid.map(row => row.join('')).join('\n');
+
+    // 5. Post-Process Special Animations (Phrase Replacement)
+    // These replace specific text patterns with complex HTML animations.
+    // Since we only colored single chars in step 2, these multi-char patterns 
+    // should mostly be intact (unless they contained Walls, which we must be careful of).
+    
+    // Fire & Heat
     output = output.replace(/\[==FIRE\]/g, '<span class="fire"></span>');
     output = output.replace(/\[====GAS====\]/g, '<span class="gas"></span>');
     output = output.replace(/\[HOT!!\]/g, '<span class="heat"></span>');
 
+    // Prep Stations
     output = output.replace(/_\|\|_/g, '<span class="chop">_||_</span>');
     output = output.replace(/\( @@@\)/g, '(<span class="sauce-anim"> @@@</span>)');
-
-    output = output.replace(/\[====\]/g, '<span class="metal">[====]</span>');
-    output = output.replace(/\[===\]/g, '<span class="metal">[===]</span>');
-    output = output.replace(/\[=====\]/g, '<span class="metal">[=====]</span>');
     
-    output = output.replace(/\[\|\^\^\|\]/g, '<span class="food">[|^^|]</span>'); 
-    output = output.replace(/\[\(@\)\]/g, '<span class="veg">[(@)]</span>'); 
-    output = output.replace(/\[\~@@\~\]/g, '<span class="meat">[~@@~]</span>'); 
-    output = output.replace(/\[<>< \]/g, '<span class="food">[<>< ]</span>'); 
+    // Smoke
+    // We use a global replace for the smoke puffs
+    output = output.replace(/\(  \)/g, '<span class="smoke-anim">(  )</span>');
+    output = output.replace(/\)\(/g, '<span class="smoke-anim">)(</span>');
 
-    const foodItems = ["RICE", "FLOUR", "SPICE", "MSG", "CANS", "BOX", "PLATES"];
-    foodItems.forEach(item => {
-        const regex = new RegExp(`\\[${item}\\]`, 'g');
-        output = output.replace(regex, `<span class="food">[${item}]</span>`);
-    });
-    
-    output = output.replace(/\[VEG\]/g, '<span class="veg">[VEG]</span>');
-    output = output.replace(/\(Veg \)/g, '<span class="veg">(Veg )</span>');
-    output = output.replace(/\( vvv\)/g, '(<span class="veg"> vvv</span>)');
-    
-    output = output.replace(/\[MEAT\]/g, '<span class="meat">[MEAT]</span>');
-    output = output.replace(/\(Meat\)/g, '<span class="meat">(Meat)</span>');
-
-    // Animated Water Puddle
+    // Water
     output = output.replace(/\( ~~~ ~~~ ~~~ \)/g, '<span class="water-leak"></span>');
-    
-    // Smoke/Steam Animation
-    output = output.replace(/\(  \)/g, '<span class="smoke-anim">(  )</span>'); 
-    output = output.replace(/\)\(/g, '<span class="smoke-anim">)(</span>'); 
 
-    output = output.replace(/\(CHEF PATROL\)/g, '<span class="npc">(CHEF PATROL)</span>');
-    
-    // Walls and Tiles
-    output = output.replace(/\+/g, '<span class="wall">+</span>');
+    // Labels
+    output = output.replace(/\(VEG\)/g, '<span class="veg">(VEG)</span>');
+    output = output.replace(/\(MEAT\)/g, '<span class="meat">(MEAT)</span>');
     
     document.getElementById('game-stage').innerHTML = output;
-    document.getElementById('grit-display').innerText = player.grit;
-    
-    if (player.grit < 10) document.getElementById('grit-display').parentElement.className = "stat-box danger grit-warning";
 }
 
 init();
 </script>
-
 </body>
 </html>

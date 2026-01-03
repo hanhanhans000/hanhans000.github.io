@@ -181,92 +181,69 @@
       }
 
       header {
-        width: 100%;
-        max-width: 800px;
+        width: auto;
+        max-width: none;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 5px;
-        border-bottom: 4px double var(--dominant-color);
-        padding-bottom: 5px;
+        margin-bottom: 0;
+        border-bottom: none;
+        padding: 8px 12px;
         flex-shrink: 0;
         position: fixed; /* overlay on top of playfield */
         top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 90; /* above game, below modals (100) and idle overlay (95) */
+        left: 8px;
+        z-index: 105; /* above modals (100), idle overlay (95), and game */
       }
 
       .title {
         position: relative;
         display: inline-flex;
         align-items: baseline;
-        gap: 6px;
-        font-size: 32px;
+        gap: 3px;
+        font-size: 14px;
         line-height: 1;
-        padding: 6px 14px 4px;
-        background: #000;
-        border-radius: 2px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 1), 0 0 18px rgba(255, 230, 0, 0.3);
-        border: 2px solid #ffe600;
-      }
-
-      /* Simple underline bar under the whole title */
-      .title::after {
-        content: "";
-        position: absolute;
-        left: 8px;
-        right: 8px;
-        bottom: -4px;
-        height: 2px;
-        background: #ffe600;
-        box-shadow: 0 0 8px rgba(255, 230, 0, 0.9);
+        padding: 3px 8px;
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
       }
 
       .title-lil {
         /* "Lil’" in the same cursive-ish style as DIGITAL COCKROACH, but smaller */
-        font-family: var(--font-ui-3); /* same family as word-cockroach */
-        font-size: 22px;
+        font-family: "Dancing Script", "Brush Script MT", cursive;
+        font-size: 12px;
         font-weight: 700;
-        letter-spacing: 0.3em;
-        text-transform: uppercase;
-        color: #ffe600;
-        padding: 0 4px;
+        letter-spacing: 0.1em;
+        text-transform: none;
+        color: #ffffff;
+        padding: 0 2px;
         background: transparent;
       }
 
       .title-strong {
-        /* "Strong" as the big digital cockroach-style gradient word */
-        font-family: var(--font-ui-3); /* same as word-cockroach */
-        font-size: 36px;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 0.3em;
-        padding: 0 6px;
-        background: linear-gradient(
-          90deg,
-          var(--dominant-color) 0%,
-          #ffffff 40%,
-          var(--dominant-color) 80%,
-          #ff00ff 100%
-        );
-        background-size: 200% 100%;
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        text-shadow: 2px 0 6px rgba(0, 0, 0, 0.9);
+        /* "Strong" - cursive */
+        font-family: "Dancing Script", "Brush Script MT", cursive;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: none;
+        padding: 0 3px;
+        color: var(--dominant-color);
+        background: transparent;
       }
 
       .title-one {
-        /* pixel tag "ONE" */
-        font-family: var(--font-pixel);
-        font-size: 20px;
-        font-weight: 400;
-        letter-spacing: 0.3em;
-        text-transform: uppercase;
-        padding: 2px 6px;
-        color: #000;
-        background: #ffe600;
+        /* "One" - cursive */
+        font-family: "Dancing Script", "Brush Script MT", cursive;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: none;
+        padding: 0 2px;
+        color: #ffffff;
+        background: transparent;
       }
 
       .stat-box {
@@ -1080,6 +1057,52 @@
       #modal-text.reborn-text .controls-hint.midi-extra {
         margin-top: 4px;
         text-align: right;
+      }
+
+      #modal-text.reborn-text .controls-hint-start {
+        display: block;
+        font-size: 18px;
+        line-height: 1.4;
+        font-family: var(--font-ui-3); /* IM Fell DW Pica - more readable cursive */
+        font-style: italic;
+        text-transform: none;
+        letter-spacing: 0.1em;
+        color: #ffffff;
+        margin-top: 12px;
+        text-align: center;
+        font-weight: 700;
+        animation: blink 1.5s infinite;
+      }
+
+      #modal-text .controls-hint-death {
+        display: block;
+        font-size: 18px;
+        line-height: 1.4;
+        font-family: var(--font-ui-3); /* IM Fell DW Pica - more readable cursive */
+        font-style: italic;
+        text-transform: none;
+        letter-spacing: 0.1em;
+        color: #ffffff;
+        margin-top: 12px;
+        text-align: center;
+        font-weight: 700;
+        animation: blink 1.5s infinite;
+      }
+
+      .end-credits {
+        display: block;
+        font-size: 18px;
+        line-height: 1.5;
+        font-family: var(--font-ui-3); /* IM Fell DW Pica - more readable cursive */
+        font-style: italic;
+        text-transform: none;
+        letter-spacing: 0.1em;
+        color: #ffffff;
+        margin-top: 20px;
+        margin-bottom: 0;
+        text-align: center;
+        font-weight: 500;
+        animation: blink 1.5s infinite;
       }
 
       #modal-text.reborn-text .word-died {
@@ -2054,6 +2077,9 @@
       </div>
     </div>
 
+    <!-- END CREDITS (outside modal) -->
+    <div id="end-credits" class="end-credits" style="display: none;"></div>
+
     <!-- IDLE RESET OVERLAY (auto-reset after inactivity) -->
     <div id="idle-countdown" class="idle-countdown-overlay">
       <div>
@@ -2074,7 +2100,7 @@
       const AUDIO_SOURCES = {
         0: "Game composing/Overall/Main Menu.mp3", // Main Menu Music (Start Screen)
         1: "Game composing/Map 1/WET MARKET LEVEL 1 2025-12-18 1831.wav", // Stage 1 Music (Wet Market)
-        2: "Game composing/Map 2/KITCHEN.mp3", // Stage 2 Music (Kitchen)
+        2: "Game composing/Map 2/KITCHEN WITH SYNTH FROM WET MARKET TRACK.mp3", // Stage 2 Music (Kitchen)
         3: "Game composing/Map 3/COCKROACH BEDROOM COZY 2025-12-18 1946.mp3", // Stage 3 Music (Bedroom)
       };
 
@@ -2089,7 +2115,6 @@
           "Game composing/Overall/MOVEMENT 12.wav",
         ],
         spray: "Game composing/Map 2/PEST SPRAY 2.ogg",
-        sprayCough: "Game composing/Map 2/COUGH.mp3",
         endLevel: "Game composing/Map 3/COCKROACH FUCNING 2025-12-15 1846.mp3",
         catWarn: "Game composing/Map 1/CAT.wav",
         catAngry: "Game composing/Map 1/ANGRY MEOW.mp3",
@@ -2744,8 +2769,8 @@ ________________________________________________________________________________
         padRight: 39, // Pad 4
         // padAction: 40,       // Pad 5: empty (no action)
         padAction: 41, // Pad 6: main action (modal button) OR reset current level
-        padResetGame: 42, // Pad 7: reset whole game
-        padToggleFullscreen: 43, // Pad 8: fullscreen toggle
+        padSkipLevel: 42, // Pad 7: skip to next level
+        padResetGame: 43, // Pad 8: reset whole game
         // Volume controls (CC numbers are examples; adjust to match your MiniLab mapping)
         volMusicCC: 74, // Knob 1 → background music
         volSfxCC: 71, // Knob 2 → sound effects (adjust CC if needed)
@@ -2776,7 +2801,7 @@ ________________________________________________________________________________
           this.audio.loop = true;
           this.currentSong = null;
           // Separate volume controls for music vs SFX
-          this.musicVolume = 1.0; // background music (knob 1)
+          this.musicVolume = 0.7; // background music (knob 1) - default 70%
           this.sfxVolume = 1.0; // sound effects (knob 2)
           this.audio.volume = this.musicVolume;
           this.lastDeathCause = "unknown";
@@ -2839,6 +2864,35 @@ ________________________________________________________________________________
 
           // Show Start Screen instead of starting immediately
           this.showStartScreen();
+          
+          // Ensure menu music plays on first user interaction (if autoplay was blocked)
+          let menuMusicStarted = false;
+          const startMenuMusicOnInteraction = () => {
+            if (!menuMusicStarted && this.audio && (this.audio.paused || this.currentSong !== AUDIO_SOURCES[0])) {
+              try {
+                const menuSongUrl = AUDIO_SOURCES[0];
+                this.currentSong = menuSongUrl;
+                if (menuSongUrl) {
+                  this.audio.src = menuSongUrl;
+                  this.audio.volume = this.musicVolume;
+                  this.audio.loop = true;
+                  this.audio.load();
+                  this.audio.play().catch(() => {});
+                  menuMusicStarted = true;
+                  // Remove listeners after first interaction
+                  document.removeEventListener("click", startMenuMusicOnInteraction);
+                  document.removeEventListener("keydown", startMenuMusicOnInteraction);
+                  document.removeEventListener("touchstart", startMenuMusicOnInteraction);
+                }
+              } catch (e) {
+                console.error("Error starting menu music", e);
+              }
+            }
+          };
+          document.addEventListener("click", startMenuMusicOnInteraction, { once: true });
+          document.addEventListener("keydown", startMenuMusicOnInteraction, { once: true });
+          document.addEventListener("touchstart", startMenuMusicOnInteraction, { once: true });
+          
           this.bindInput();
           this.bindMIDI();
           this.updateVolumeDisplay();
@@ -2884,11 +2938,47 @@ ________________________________________________________________________________
         }
 
         showStartScreen() {
+          // Hide credits if they exist
+          const creditsEl = document.getElementById("end-credits");
+          if (creditsEl) {
+            creditsEl.style.display = "none";
+          }
+
+          // Stop end level music (cockroach funking) if playing
+          if (this.endLevelAudio) {
+            this.endLevelAudio.pause();
+            this.endLevelAudio.currentTime = 0;
+          }
+
           // Initialize and render the game first so it's visible behind the modal
           this.level = 1;
           this.updateTheme();
           // Play main menu music for start screen
-          this.playMenuMusic();
+          try {
+            const songUrl = AUDIO_SOURCES[0]; // Main Menu music
+            this.currentSong = songUrl;
+            if (songUrl) {
+              // Stop any currently playing music first
+              if (this.audio && !this.audio.paused) {
+                this.audio.pause();
+                this.audio.currentTime = 0;
+              }
+              this.audio.src = songUrl;
+              this.audio.volume = this.musicVolume;
+              this.audio.loop = true;
+              // Load the audio file
+              this.audio.load();
+              // Try to play, but don't fail if autoplay is blocked
+              const playPromise = this.audio.play();
+              if (playPromise !== undefined) {
+                playPromise.catch((e) => {
+                  console.log("Menu music waiting for user interaction", e);
+                });
+              }
+            }
+          } catch (e) {
+            console.error("Error playing menu music", e);
+          }
 
           const biomeIndex = ((this.level - 1) % 3) + 1;
           this.biome = BIOMES[biomeIndex];
@@ -2924,7 +3014,8 @@ ________________________________________________________________________________
             '<span class="word-cockroach">digital cockroach</span>' +
             '<span class="controls-hint keys">arrow keys / wasd = move · enter / space = wait</span>' +
             '<span class="controls-hint midi-nav">pads 1–4 on midi = move · pad 6 = accept / interact</span>' +
-            '<span class="controls-hint midi-extra">pad 7 = reset game · pad 8 = fullscreen · knob / fader = volume</span>';
+            '<span class="controls-hint midi-extra">pad 7 = skip level · pad 8 = reset game · knob / fader = volume</span>' +
+            '<span class="controls-hint-start">press pad 6 or use the mouse to start the game</span>';
           this.modalText.className = "reborn-text";
           // Put typography (with instructions) at the top
           this.modalText.style.order = "1";
@@ -2944,15 +3035,37 @@ ________________________________________________________________________________
           }
 
           // First notification button: centered, placed directly under the instructions
-          this.modalBtn.textContent = "ACCEPT AND THRIVE";
+          this.modalBtn.textContent = "ACCEPT AND THRIVE (press pad 6 once)";
           this.modalBtn.style.order = "2";
 
           // Make modal overlay more transparent so game is visible
           this.modalOverlay.style.background = "rgba(0, 0, 0, 0.7)";
 
           this.modalBtn.onclick = () => {
-            // Ensure music starts from a real user click (avoids autoplay blocking)
-            this.playMusic();
+            // Stop main menu music and switch to Stage 1 music
+            try {
+              if (this.audio) {
+                this.audio.pause();
+                this.audio.currentTime = 0;
+              }
+              const songUrl = AUDIO_SOURCES[1]; // Stage 1 music
+              this.currentSong = songUrl;
+              if (songUrl) {
+                this.audio.src = songUrl;
+                this.audio.volume = this.musicVolume;
+                this.audio.loop = true;
+                // Load the new source first
+                this.audio.load();
+                const playPromise = this.audio.play();
+                if (playPromise !== undefined) {
+                  playPromise.catch((e) => {
+                    console.log("Stage 1 music play error", e);
+                  });
+                }
+              }
+            } catch (e) {
+              console.error("Error playing Stage 1 music", e);
+            }
 
             // Trigger a small drip falling from beneath the cockroach
             if (this.modalDrip) {
@@ -2968,23 +3081,94 @@ ________________________________________________________________________________
               this.modalDrip.classList.add("active");
             }
 
-            // Wait for the drip animation, then start the level
+            // Wait for the drip animation, then show tutorial screen
             setTimeout(() => {
-              this.modalOverlay.style.display = "none";
-              this.modalOverlay.style.background = "rgba(0, 0, 0, 0.95)"; // Restore for other modals
-              this.modalTitle.style.display = "block"; // Restore for other modals
-              this.modalText.className = ""; // Reset class
-              this.modalArt.classList.remove("float"); // Remove float class
-              if (this.modalDrip) {
-                this.modalDrip.textContent = "";
-                this.modalDrip.classList.remove("active");
-              }
-              // Properly start the level (resets grit, steps, etc.)
-              this.startLevel();
+              // Show tutorial screen before starting level
+              this.showTutorialScreen();
             }, 700);
           };
 
           this.modalOverlay.style.display = "flex";
+        }
+
+        showTutorialScreen() {
+          // Hide credits if they exist
+          const creditsEl = document.getElementById("end-credits");
+          if (creditsEl) {
+            creditsEl.style.display = "none";
+          }
+
+          // Set tutorial title with different font (pixel font)
+          this.modalTitle.textContent = "HOW TO SURVIVE";
+          this.modalTitle.style.display = "block";
+          this.modalTitle.style.fontFamily = "var(--font-pixel)";
+          this.modalTitle.style.fontSize = "32px";
+          this.modalTitle.style.textTransform = "uppercase";
+          this.modalTitle.style.letterSpacing = "2px";
+
+          // Show cockroach character art in green
+          this.modalArt.textContent = "&";
+          this.modalArt.classList.remove("float", "wiggle");
+          this.modalArt.style.fontSize = "48px";
+          this.modalArt.style.lineHeight = "1";
+          this.modalArt.style.margin = "10px 0";
+          this.modalArt.style.color = "#00ff00"; // Bright green
+          this.modalArt.style.fontWeight = "bold";
+
+          // Clear drip
+          if (this.modalDrip) {
+            this.modalDrip.textContent = "";
+            this.modalDrip.classList.remove("active");
+          }
+
+          // Tutorial text
+          this.modalText.className = "";
+          this.modalText.style.fontFamily = "var(--font-ui-3)";
+          this.modalText.style.fontSize = "20px";
+          this.modalText.style.fontStyle = "italic";
+          this.modalText.style.color = "#ffffff";
+          this.modalText.style.transform = "none";
+          this.modalText.innerHTML = 
+            `You are the <strong style="color: #00ff00; font-weight: 700;">green guy</strong> (the cockroach <strong style="color: #00ff00; font-weight: 700;">&</strong>).<br><br>` +
+            `You have <strong style="color: var(--dominant-color);">${MAX_GRIT} grit</strong>.<br>` +
+            `Every <strong style="color: var(--dominant-color);">${MOVES_PER_HUNGER} moves</strong> costs you <strong style="color: var(--dominant-color);">1 grit</strong>.<br><br>` +
+            `You must <strong style="color: var(--danger-color);">dodge enemies</strong> and reach the <strong style="color: var(--secondary-color);">end (E)</strong>.<br><br>` +
+            `<span class="controls-hint-start">press pad 6 or click to continue</span>`;
+
+          // Button - centered and updated text
+          this.modalBtn.textContent = "press pad 6 once again";
+          this.modalBtn.style.left = "50%"; // Center the button
+
+          // Modal overlay
+          this.modalOverlay.style.background = "rgba(0, 0, 0, 0.95)";
+          this.modalOverlay.style.display = "flex";
+
+          // Button click handler - start the level
+          this.modalBtn.onclick = () => {
+            this.modalOverlay.style.display = "none";
+            this.modalOverlay.style.background = "rgba(0, 0, 0, 0.95)";
+            this.modalTitle.style.display = "block";
+            // Reset title styles
+            this.modalTitle.style.fontFamily = "";
+            this.modalTitle.style.fontSize = "";
+            this.modalTitle.style.textTransform = "";
+            this.modalTitle.style.letterSpacing = "";
+            // Reset text styles
+            this.modalText.className = "";
+            this.modalText.style.fontFamily = "";
+            this.modalText.style.fontSize = "";
+            this.modalText.style.fontStyle = "";
+            this.modalText.style.color = "";
+            this.modalText.style.transform = "";
+            // Reset art styles
+            this.modalArt.style.fontSize = "";
+            this.modalArt.style.color = "";
+            this.modalArt.style.fontWeight = "";
+            // Reset button position
+            this.modalBtn.style.left = "";
+            // Properly start the level (resets grit, steps, etc.)
+            this.startLevel();
+          };
         }
 
         showEndScreen() {
@@ -3016,7 +3200,7 @@ ________________________________________________________________________________
             this.modalDrip.classList.remove("active");
           }
 
-          // Ending text
+          // Ending text (without credits)
           this.modalText.className = "";
           this.modalText.style.fontFamily = "var(--font-ui-3)";
           this.modalText.style.fontSize = "24px";
@@ -3026,6 +3210,19 @@ ________________________________________________________________________________
           this.modalText.textContent = "You found a mate.\nThey are hungry.";
 
           this.modalBtn.textContent = "DIE IN SATISFACTION";
+
+          // Show credits inside modal, between notification and button
+          const creditsEl = document.getElementById("end-credits");
+          if (creditsEl) {
+            creditsEl.textContent = "musics and sounds by the talented artist OneSoundEveryDay";
+            // Remove from current position if it exists elsewhere
+            if (creditsEl.parentNode) {
+              creditsEl.parentNode.removeChild(creditsEl);
+            }
+            // Insert between modalText and modalBtn
+            this.modalText.parentNode.insertBefore(creditsEl, this.modalBtn);
+            creditsEl.style.display = "block";
+          }
 
           this.modalOverlay.style.background = "rgba(0, 0, 0, 0.9)";
 
@@ -3040,6 +3237,12 @@ ________________________________________________________________________________
             if (this.endLevelAudio) {
               this.endLevelAudio.pause();
               this.endLevelAudio.currentTime = 0;
+            }
+
+            // Stop background music and reset
+            if (this.audio) {
+              this.audio.pause();
+              this.audio.currentTime = 0;
             }
 
             if (this.roachSlamInterval) {
@@ -3060,7 +3263,7 @@ ________________________________________________________________________________
 
             this.level = 1;
             // When we return to the beginning, level 1 + showStartScreen()
-            // will play the menu music defined in AUDIO_SOURCES[1]
+            // will play the menu music defined in AUDIO_SOURCES[0] (Main Menu)
             this.showStartScreen();
           };
 
@@ -3068,6 +3271,12 @@ ________________________________________________________________________________
         }
 
         showDeathScreen() {
+          // Hide credits if they exist
+          const creditsEl = document.getElementById("end-credits");
+          if (creditsEl) {
+            creditsEl.style.display = "none";
+          }
+
           // Custom death screen with headless cockroach
           this.modalTitle.textContent = "";
           this.modalTitle.style.display = "none";
@@ -3114,7 +3323,8 @@ ________________________________________________________________________________
               break;
           }
 
-          this.modalText.textContent = deathLine;
+          // Set death message with instruction
+          this.modalText.innerHTML = deathLine + '<br><span class="controls-hint-death">press once on pad 6 to continue</span>';
           this.modalText.className = "";
           this.modalText.style.fontFamily = "var(--font-ui-3)";
           this.modalText.style.fontSize = "26px";
@@ -3158,29 +3368,6 @@ ________________________________________________________________________________
           document.body.classList.add(`theme-${themeIndex}`);
         }
 
-        playMenuMusic() {
-          try {
-            const songUrl = AUDIO_SOURCES[0]; // Main Menu music
-            if (this.currentSong !== songUrl) {
-              this.currentSong = songUrl;
-              if (songUrl) {
-                this.audio.src = songUrl;
-                this.audio.volume = this.musicVolume;
-                const playPromise = this.audio.play();
-                if (playPromise && typeof playPromise.catch === "function") {
-                  playPromise.catch((e) => {
-                    console.log("Audio waiting for user interaction", e);
-                  });
-                }
-              } else {
-                this.audio.pause();
-              }
-            }
-          } catch (e) {
-            console.error("Error in playMenuMusic", e);
-          }
-        }
-
         playMusic() {
           try {
             const themeIndex = ((this.level - 1) % 3) + 1;
@@ -3191,6 +3378,9 @@ ________________________________________________________________________________
               if (songUrl) {
                 this.audio.src = songUrl;
                 this.audio.volume = this.musicVolume;
+                this.audio.loop = true;
+                // Load the new source first
+                this.audio.load();
                 const playPromise = this.audio.play();
                 if (playPromise && typeof playPromise.catch === "function") {
                   playPromise.catch((e) => {
@@ -3200,6 +3390,9 @@ ________________________________________________________________________________
               } else {
                 this.audio.pause();
               }
+            } else if (this.audio.paused) {
+              // If same song but paused, resume it
+              this.audio.play().catch(() => {});
             }
           } catch (e) {
             console.error("Error in playMusic", e);
@@ -3314,6 +3507,12 @@ ________________________________________________________________________________
             this.audio.pause();
             this.audio.currentTime = 0;
             this.currentSong = null;
+          }
+
+          // Stop end level music (cockroach funking)
+          if (this.endLevelAudio) {
+            this.endLevelAudio.pause();
+            this.endLevelAudio.currentTime = 0;
           }
 
           this.showStartScreen();
@@ -3857,8 +4056,8 @@ ________________________________________________________________________________
           // --- FOOD DENSITY PER STAGE ---
           // Base 2% density, with extra crumbs for stages 1 and 2
           let foodDensity = 0.02;
-          // Stage 1 (Wet Market): make it a bit kinder, more food
-          if (themeIndex === 1) foodDensity = 0.16;
+          // Stage 1 (Wet Market): make it easier with more food
+          if (themeIndex === 1) foodDensity = 0.20; // Increased from 0.16 to 0.20
           // Stage 2 (Kitchen): still generous but slightly lower than before
           if (themeIndex === 2) foodDensity = 0.14;
 
@@ -3866,16 +4065,19 @@ ________________________________________________________________________________
 
           for (let i = 0; i < crumbCount; i++) this.setRandomTile("FOOD");
 
-          for (let i = 0; i < Math.floor(area * 0.005); i++)
+          // Level 1: reduce poison and glue density for easier gameplay
+          const poisonDensity = themeIndex === 1 ? 0.003 : 0.005; // Reduced from 0.005 to 0.003 for level 1
+          const glueDensity = themeIndex === 1 ? 0.006 : 0.01; // Reduced from 0.01 to 0.006 for level 1
+          for (let i = 0; i < Math.floor(area * poisonDensity); i++)
             this.setRandomTile("POISON");
-          for (let i = 0; i < Math.floor(area * 0.01); i++)
+          for (let i = 0; i < Math.floor(area * glueDensity); i++)
             this.setRandomTile("GLUE");
 
           let enemyCount =
             3 + Math.floor(this.level / 2) + Math.floor(area * 0.005);
 
-          // Stage 1 (Wet Market): tone down geckos a bit so it's less punishing
-          if (themeIndex === 1) enemyCount = Math.floor(enemyCount * 1.4);
+          // Stage 1 (Wet Market): reduce enemy count to make it easier
+          if (themeIndex === 1) enemyCount = Math.floor(enemyCount * 0.7); // Reduced from 1.4 to 0.7
 
           // MORE Ants in Stage 2 to see them get crushed!
           if (themeIndex === 2) enemyCount = Math.floor(enemyCount * 2.2);
@@ -4047,7 +4249,6 @@ ________________________________________________________________________________
 
             // Play random movement sound
             this.playMovementSound();
-
             if (targetType === "FOOD") {
               this.grit = Math.min(MAX_GRIT, this.grit + 2);
               this.map[newY][newX] = "EMPTY";
@@ -4097,13 +4298,13 @@ ________________________________________________________________________________
           // Stage 2: Boot + Spray mix
           if (this.biome.hazardType === "boot_spray") {
             const roll = Math.random();
-            // 25% Boot (Stomp)
-            if (roll < 0.25) {
+            // 20% Boot (Stomp)
+            if (roll < 0.20) {
               this.startHazard("boot");
             }
-            // Reduced Spray Frequency: 7% (was higher)
-            // Checks if roll is between 0.25 and 0.32
-            else if (roll < 0.32) {
+            // Increased Spray Frequency: 20% (more spray on stage 2)
+            // Checks if roll is between 0.20 and 0.40
+            else if (roll < 0.40) {
               this.startHazard("spray");
             }
           }
@@ -4254,11 +4455,6 @@ ________________________________________________________________________________
                 this.log(FLAVOR_TEXT.spray_hit, "danger");
                 // Chemical cloud → green flash
                 this.triggerDamageFlash("green");
-                // Cough reaction sound
-                this.sfxAudio.src = SOUND_PATHS.sprayCough;
-                this.sfxAudio.currentTime = 0;
-                this.sfxAudio.volume = this.sfxBaseVolume * this.sfxVolume;
-                this.sfxAudio.play().catch(() => {});
               } else if (this.activeHazardType === "vacuum") {
                 this.lastDeathCause = "vacuum";
                 this.grit -= 20;
@@ -4570,7 +4766,9 @@ ________________________________________________________________________________
               if (Math.abs(dx) > Math.abs(dy)) moveX = dx > 0 ? 1 : -1;
               else moveY = dy > 0 ? 1 : -1;
 
-              if (Math.random() < 0.5) {
+              // Level 1: slower enemy movement (30% chance vs 50% for other levels)
+              const moveChance = this.level === 1 ? 0.3 : 0.5;
+              if (Math.random() < moveChance) {
                 const nx = enemy.x + moveX;
                 const ny = enemy.y + moveY;
                 if (
@@ -4941,6 +5139,9 @@ ________________________________________________________________________________
         }
 
         handleMIDIMessage(message) {
+          // Register MIDI input as activity to prevent idle reset
+          this.registerActivity();
+          
           const [status, data1, data2] = message.data;
           const command = status & 0xf0;
           const channel = status & 0x0f;
@@ -4981,16 +5182,26 @@ ________________________________________________________________________________
                   this.retryLevel();
                 }
                 break;
+              case MIDI_CONFIG.padSkipLevel:
+                // Skip to next level
+                this.skipLevel();
+                break;
               case MIDI_CONFIG.padResetGame:
                 // Reset whole game back to level 1 intro
                 this.level = 1;
                 this.isGameOver = false;
-                this.showStartScreen();
-                break;
-              case MIDI_CONFIG.padToggleFullscreen:
-                if (typeof this.toggleFullScreen === "function") {
-                  this.toggleFullScreen();
+                // Stop end level music (cockroach funking)
+                if (this.endLevelAudio) {
+                  this.endLevelAudio.pause();
+                  this.endLevelAudio.currentTime = 0;
                 }
+                // Stop background music
+                if (this.audio) {
+                  this.audio.pause();
+                  this.audio.currentTime = 0;
+                  this.currentSong = null;
+                }
+                this.showStartScreen();
                 break;
               default:
                 break;
